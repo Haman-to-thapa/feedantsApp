@@ -13,22 +13,15 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     28 * 60 * 1000 +
     32 * 1000,
 }) => {
-  const getDeadline = () => {
-    if (targetDate) {
-      const parsed = new Date(targetDate).getTime();
-      if (!isNaN(parsed) && parsed > 0) {
-        return parsed;
-      }
-    }
-    return Date.now() + initialDurationMs;
-  };
-
   const [timeLeft, setTimeLeft] = useState<number>(() => {
-    return Math.max(0, getDeadline() - Date.now());
+    const d = targetDate ? new Date(targetDate).getTime() : 0;
+    const deadline = !isNaN(d) && d > 0 ? d : Date.now() + initialDurationMs;
+    return Math.max(0, deadline - Date.now());
   });
 
   useEffect(() => {
-    const deadline = getDeadline();
+    const d = targetDate ? new Date(targetDate).getTime() : 0;
+    const deadline = !isNaN(d) && d > 0 ? d : Date.now() + initialDurationMs;
 
     const updateCountdown = () => {
       const remaining = Math.max(0, deadline - Date.now());
@@ -40,7 +33,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     const timer = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(timer);
-  }, [targetDate]);
+  }, [targetDate, initialDurationMs]);
 
   const totalSeconds = Math.max(0, Math.floor(timeLeft / 1000));
   const days = Math.floor(totalSeconds / (24 * 60 * 60));

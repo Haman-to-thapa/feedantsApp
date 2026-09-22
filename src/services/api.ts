@@ -1,5 +1,3 @@
-import {Platform} from 'react-native';
-
 // Candidate endpoints for Physical USB device (localhost/127.0.0.1 via adb reverse) and Android Emulator (10.0.2.2)
 const CANDIDATE_URLS = [
   'http://localhost:5000/api',
@@ -14,7 +12,7 @@ export const getActiveBaseUrl = () => activeBaseUrl;
 const fetchWithTimeout = async (
   path: string,
   options: RequestInit = {},
-  timeoutMs = 4000,
+  timeoutMs = 7000,
 ): Promise<Response> => {
   // First attempt with active base URL
   const controller = new AbortController();
@@ -27,10 +25,10 @@ const fetchWithTimeout = async (
     });
     clearTimeout(timer);
     return res;
-  } catch (primaryErr) {
+  } catch (primaryErr: any) {
     clearTimeout(timer);
 
-    // If primary failed (e.g. 10.0.2.2 on physical device), try fallback
+    // If primary failed, try each candidate
     for (const candidate of CANDIDATE_URLS) {
       if (candidate !== activeBaseUrl) {
         const altController = new AbortController();
@@ -43,7 +41,7 @@ const fetchWithTimeout = async (
           });
           clearTimeout(altTimer);
           if (altRes) {
-            activeBaseUrl = candidate; // Successfully discovered working route
+            activeBaseUrl = candidate;
             return altRes;
           }
         } catch {
@@ -60,11 +58,14 @@ export const getCompetition = async (competitionId: string) => {
   const response = await fetchWithTimeout(
     `/competitions/${competitionId}`,
     {method: 'GET'},
-    4000,
+    8000,
   );
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch competition: status ${response.status}`);
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(
+      errorData.message || `Failed to fetch competition: status ${response.status}`,
+    );
   }
 
   return response.json();

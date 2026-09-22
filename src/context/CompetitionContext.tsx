@@ -72,13 +72,18 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
             setLoading(false); // Instant render from cache!
           }
         }
-      } catch (e) {
+      } catch {
         // Fallback silently to network
       }
     };
 
     hydrateFromCache();
   }, []);
+
+  const competitionRef = React.useRef<any>(null);
+  React.useEffect(() => {
+    competitionRef.current = competition;
+  }, [competition]);
 
   // Main data loader with network fallback and background refresh
   const loadCompetition = useCallback(async (id?: string) => {
@@ -87,8 +92,7 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
 
     try {
       setError('');
-      // If we don't have any cached data yet, show loading
-      if (!competition) {
+      if (!competitionRef.current) {
         setLoading(true);
       }
 
@@ -97,10 +101,9 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
       if (result?.data) {
         setCompetition(result.data);
         setError('');
-        // Asynchronously update cache
         AsyncStorage.setItem(COMPETITION_CACHE_KEY, JSON.stringify(result.data)).catch(() => {});
       } else {
-        if (!competition) {
+        if (!competitionRef.current) {
           setError('Unable to load competition');
         }
       }
@@ -122,14 +125,13 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
         }
       }
     } catch (err: any) {
-      console.log('Context loadCompetition network note:', err?.message);
-      if (!competition) {
-        setError('Unable to load competition. Please check your connection.');
+      if (!competitionRef.current) {
+        setError(err?.message || 'Unable to load competition. Please check your connection.');
       }
     } finally {
       setLoading(false);
     }
-  }, [activeCompetitionId, competition, userEmail]);
+  }, [activeCompetitionId, userEmail]);
 
   // Register user
   const register = useCallback(

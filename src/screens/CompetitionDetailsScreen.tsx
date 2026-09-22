@@ -1,6 +1,5 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   StatusBar,
@@ -9,6 +8,8 @@ import {
   Modal,
   TextInput,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 
@@ -25,7 +26,9 @@ import ReferAndEarnCard from '../components/competition/ReferAndEarnCard';
 import UserReviews from '../components/competition/UserReviews';
 import AdvertisementCard from '../components/competition/AdvertisementCard';
 import UploadSubmissionButton from '../components/competition/UploadSubmissionButton';
+import VideoModal from '../components/competition/VideoModal';
 
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useCompetition} from '../context/CompetitionContext';
 import {pick, types} from '../utils/documentPicker';
 
@@ -61,10 +64,35 @@ const CompetitionDetailsScreen = () => {
   const [uploadingSubmission, setUploadingSubmission] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string>('');
 
+  // Video Preview Modal State
+  const [videoModalVisible, setVideoModalVisible] = useState<boolean>(false);
+  const [activeVideo, setActiveVideo] = useState({
+    title: '',
+    subtitle: '',
+    videoUrl: '',
+    thumbnailUrl: '',
+  });
+
+  const handleOpenVideo = (
+    title: string,
+    subtitle?: string,
+    videoUrl?: string,
+    thumbnailUrl?: string,
+  ) => {
+    setActiveVideo({
+      title,
+      subtitle: subtitle || '',
+      videoUrl: videoUrl || 'https://www.youtube.com',
+      thumbnailUrl: thumbnailUrl || '',
+    });
+    setVideoModalVisible(true);
+  };
+
   // Fetch / refresh on mount
   useEffect(() => {
     loadCompetition(competitionId);
-  }, [competitionId, loadCompetition]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [competitionId]);
 
   // Handle User Registration
   const handleRegister = async () => {
@@ -92,7 +120,7 @@ const CompetitionDetailsScreen = () => {
   };
 
   // Video Submission Upload Handler
-  const handleUploadSubmission = async () => {
+  const handleUploadSubmission = useCallback(async () => {
     try {
       setUploadingSubmission(true);
       setUploadError('');
@@ -125,15 +153,18 @@ const CompetitionDetailsScreen = () => {
       ) {
         return;
       }
-      console.error('Submission upload error:', err);
-      setUploadError(err.message || 'Unable to upload submission');
+      setUploadError(err?.message || 'Unable to upload submission');
     } finally {
       setUploadingSubmission(false);
     }
-  };
+  }, [uploadVideo]);
 
   const handleBack = useCallback(() => {
-    navigation.goBack();
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      navigation.navigate('MainTabs');
+    }
   }, [navigation]);
 
   const handleButtonPress = useCallback(() => {
@@ -148,13 +179,22 @@ const CompetitionDetailsScreen = () => {
     if (competitionState === 'SUBMISSION_OPEN' && !submissionUploaded) {
       handleUploadSubmission();
     }
-  }, [isRegistered, submissionUploaded, competitionState]);
+  }, [isRegistered, submissionUploaded, competitionState, handleUploadSubmission]);
+
+  const insets = useSafeAreaInsets();
+  const dynamicTopInset =
+    Platform.OS === 'android'
+      ? Math.max(insets.top, StatusBar.currentHeight || 0, 10)
+      : insets.top;
 
   // Loading state (only shown if no cached data is available yet)
   if (loading && !competition) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
+      <View style={[styles.safeArea, {paddingTop: dynamicTopInset}]}>
+        <StatusBar
+          barStyle="dark-content"
+          {...({translucent: true, backgroundColor: 'transparent'} as any)}
+        />
         <View style={styles.loadingContainer}>
           <View style={styles.loadingCircle}>
             <Text style={styles.loadingIcon}>F</Text>
@@ -162,15 +202,18 @@ const CompetitionDetailsScreen = () => {
           <Text style={styles.loadingTitle}>Loading competition</Text>
           <Text style={styles.loadingText}>Please wait...</Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   // Error screen + Retry
   if (error && !competition) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
+      <View style={[styles.safeArea, {paddingTop: dynamicTopInset}]}>
+        <StatusBar
+          barStyle="dark-content"
+          {...({translucent: true, backgroundColor: 'transparent'} as any)}
+        />
         <View style={styles.errorContainer}>
           <Text style={styles.errorIcon}>!</Text>
           <Text style={styles.errorTitle}>Unable to load competition</Text>
@@ -184,13 +227,16 @@ const CompetitionDetailsScreen = () => {
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" {...({backgroundColor: '#F8FAFA'} as any)} />
+    <View style={[styles.safeArea, {paddingTop: dynamicTopInset}]}>
+      <StatusBar
+        barStyle="dark-content"
+        {...({translucent: true, backgroundColor: 'transparent'} as any)}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -221,6 +267,14 @@ const CompetitionDetailsScreen = () => {
             profession={competition.judge.profession}
             experience={competition.judge.experience}
             imageUrl={competition.judge.image || competition.judge.imageUrl}
+            onPressVideo={() =>
+              handleOpenVideo(
+                `Judge Intro Video: ${competition.judge.name}`,
+                competition.judge.profession,
+                competition.judge.introVideo || 'https://www.youtube.com',
+                competition.judge.image || competition.judge.imageUrl,
+              )
+            }
           />
         )}
 
@@ -236,7 +290,16 @@ const CompetitionDetailsScreen = () => {
         />
 
         {/* Previous Winners with video thumbnails */}
-        <PreviousWinners />
+        <PreviousWinners
+          onPressWinnerVideo={w =>
+            handleOpenVideo(
+              `${w.name} - Performance`,
+              `${w.position} • Feedants Classical Dance`,
+              'https://www.youtube.com',
+              w.imageUrl,
+            )
+          }
+        />
 
         {/* Underline Tabs: About / Judging / Rules */}
         <CompetitionInfoTabs
@@ -249,7 +312,15 @@ const CompetitionDetailsScreen = () => {
         <RewardsSection rewards={competition?.rewards} />
 
         {/* Disclaimer Banner + Side-by-side Prize Video & Razorpay */}
-        <CompetitionPolicies />
+        <CompetitionPolicies
+          onPressPrizeVideo={() =>
+            handleOpenVideo(
+              'How Will You Receive Prize Money?',
+              'Instant transfer via Razorpay / UPI to verified bank account',
+              'https://www.youtube.com',
+            )
+          }
+        />
 
         {/* Refer & Earn More Discount with link copy */}
         <ReferAndEarnCard />
@@ -300,12 +371,15 @@ const CompetitionDetailsScreen = () => {
       </ScrollView>
 
       {/* Registration Modal */}
+      {/* Registration Modal - Centered Dialog with Keyboard Handling */}
       <Modal
         visible={showRegisterModal}
         transparent
-        animationType="slide"
+        animationType="fade"
         onRequestClose={() => setShowRegisterModal(false)}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Register for Competition</Text>
@@ -354,9 +428,19 @@ const CompetitionDetailsScreen = () => {
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+
+      {/* In-App Video Preview & Playback Modal */}
+      <VideoModal
+        visible={videoModalVisible}
+        title={activeVideo.title}
+        subtitle={activeVideo.subtitle}
+        videoUrl={activeVideo.videoUrl}
+        thumbnailUrl={activeVideo.thumbnailUrl}
+        onClose={() => setVideoModalVisible(false)}
+      />
+    </View>
   );
 };
 
@@ -525,15 +609,22 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(10, 20, 26, 0.65)',
+    paddingHorizontal: 20,
   },
   modalCard: {
+    width: '100%',
+    maxWidth: 400,
     backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 30,
+    borderRadius: 22,
+    padding: 22,
+    elevation: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    shadowOffset: {width: 0, height: 4},
   },
   modalHeader: {
     flexDirection: 'row',

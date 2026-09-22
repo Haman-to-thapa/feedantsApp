@@ -80,7 +80,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
           <>
             <Text style={styles.bodyText}>{about || defaultAbout}</Text>
             {isExpanded && (
-              <Text style={[styles.bodyText, {marginTop: 6}]}>
+              <Text style={[styles.bodyText, styles.expandedText]}>
                 Winners will receive attractive cash prizes and verified
                 certificates. Get feedback from experienced mentors and build
                 your artistic portfolio!
@@ -166,6 +166,9 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 18,
     color: '#55656F',
+  },
+  expandedText: {
+    marginTop: 6,
   },
   bulletItem: {
     fontSize: 12,

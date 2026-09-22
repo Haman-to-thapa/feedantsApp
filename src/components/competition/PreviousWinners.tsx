@@ -1,5 +1,12 @@
 import React from 'react';
-import {View, Text, StyleSheet, ScrollView, Image} from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 
 interface WinnerItem {
   name: string;
@@ -34,7 +41,13 @@ const winnersData: WinnerItem[] = [
   },
 ];
 
-const PreviousWinners: React.FC = () => {
+interface PreviousWinnersProps {
+  onPressWinnerVideo?: (winner: WinnerItem) => void;
+}
+
+const PreviousWinners: React.FC<PreviousWinnersProps> = ({
+  onPressWinnerVideo,
+}) => {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Previous Winners</Text>
@@ -44,7 +57,11 @@ const PreviousWinners: React.FC = () => {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollList}>
         {winnersData.map(w => (
-          <View key={w.name} style={styles.card}>
+          <TouchableOpacity
+            key={w.name}
+            style={styles.card}
+            activeOpacity={0.8}
+            onPress={() => onPressWinnerVideo?.(w)}>
             <View style={styles.imageWrapper}>
               <Image source={{uri: w.imageUrl}} style={styles.image} />
               <View style={styles.playBadge}>
@@ -58,7 +75,7 @@ const PreviousWinners: React.FC = () => {
               </Text>
               <Text style={styles.position}>{w.position}</Text>
             </View>
-          </View>
+          </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
