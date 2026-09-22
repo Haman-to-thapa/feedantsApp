@@ -3,151 +3,199 @@ import {View, Text, StyleSheet} from 'react-native';
 
 const CompetitionHero: React.FC = () => {
   return (
-    <>
-      {/* Competition Title */}
-      <View style={styles.titleSection}>
+    <View style={styles.card}>
+      {/* Title and Registered Badge */}
+      <View style={styles.titleRow}>
         <Text style={styles.title}>Feedants Classical Dance</Text>
 
-        <View style={styles.tagsRow}>
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Dance</Text>
-          </View>
-
-          <View style={styles.tag}>
-            <Text style={styles.tagText}>Multi-Win</Text>
-          </View>
-        </View>
-
-        <Text style={styles.certificateText}>Winners get certificate</Text>
-      </View>
-
-      {/* Prize / Entry Fee */}
-      <View style={styles.infoRow}>
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Prize Pool</Text>
-          <Text style={styles.infoValue}>₹1,500</Text>
-        </View>
-
-        <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>Entry Fee</Text>
-          <Text style={styles.infoValue}>₹99</Text>
+        <View style={styles.registeredBadge}>
+          <Text style={styles.checkIcon}>✔</Text>
+          <Text style={styles.registeredText}>Registered</Text>
         </View>
       </View>
 
-      {/* Spots */}
-      <View style={styles.spotsCard}>
-        <View>
-          <Text style={styles.spotsTitle}>Only 19 spots left</Text>
-          <Text style={styles.bookedText}>1 / 20 Booked</Text>
+      {/* Tags and Certificate */}
+      <View style={styles.tagsRow}>
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>Dance</Text>
         </View>
 
-        <View style={styles.progressContainer}>
+        <View style={styles.tag}>
+          <Text style={styles.tagText}>Multi-Win</Text>
+        </View>
+
+        <View style={styles.certificateWrapper}>
+          <Text style={styles.trophyIcon}>🏆</Text>
+          <Text style={styles.certificateText}>Winners get certificate</Text>
+        </View>
+      </View>
+
+      {/* 3-Column Stats: Prize Pool | Entry Fee | Spots */}
+      <View style={styles.statsRow}>
+        {/* Prize Pool */}
+        <View style={styles.statCol}>
+          <Text style={styles.statLabel}>Prize Pool</Text>
+          <Text style={styles.prizeValue}>₹ 1,500</Text>
+        </View>
+
+        {/* Entry Fee */}
+        <View style={styles.statCol}>
+          <Text style={styles.statLabel}>Entry Fee</Text>
+          <Text style={styles.feeValue}>₹ 99</Text>
+        </View>
+
+        {/* Spots */}
+        <View style={styles.spotsCol}>
+          <View style={styles.spotsHeader}>
+            <Text style={styles.spotsUserIcon}>👥</Text>
+            <Text style={styles.spotsTitle}>Only 19 spots left</Text>
+          </View>
+
           <View style={styles.progressTrack}>
             <View style={styles.progressFill} />
           </View>
-          <Text style={styles.progressText}>5%</Text>
+
+          <Text style={styles.bookedText}>1 / 20 Booked</Text>
         </View>
       </View>
-    </>
+    </View>
   );
 };
 
 export default CompetitionHero;
 
 const styles = StyleSheet.create({
-  titleSection: {
-    marginTop: 10,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#EAEFEF',
+    padding: 16,
+    marginTop: 6,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
   },
   title: {
-    fontSize: 27,
+    flex: 1,
+    fontSize: 20,
     fontWeight: '800',
-    color: '#16232C',
-    lineHeight: 34,
+    color: '#14232C',
+    marginRight: 8,
+  },
+  registeredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E5F6F3',
+    paddingHorizontal: 9,
+    paddingVertical: 5,
+    borderRadius: 12,
+  },
+  checkIcon: {
+    fontSize: 11,
+    color: '#007B8A',
+    fontWeight: '800',
+    marginRight: 4,
+  },
+  registeredText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#007B8A',
   },
   tagsRow: {
     flexDirection: 'row',
-    marginTop: 12,
-    gap: 8,
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 10,
+    gap: 7,
   },
   tag: {
-    backgroundColor: '#E8F5F4',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5EDED',
+    backgroundColor: '#FAFDFD',
   },
   tagText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#167C80',
+    color: '#34454E',
   },
-  certificateText: {
-    marginTop: 13,
-    fontSize: 13,
-    color: '#59636B',
-  },
-  infoRow: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  infoCard: {
-    flex: 1,
-    backgroundColor: '#F7FAFA',
-    borderRadius: 16,
-    padding: 17,
-    borderWidth: 1,
-    borderColor: '#E7EEEE',
-  },
-  infoLabel: {
-    fontSize: 12,
-    color: '#7A858A',
-    marginBottom: 7,
-  },
-  infoValue: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#16232C',
-  },
-  spotsCard: {
-    marginTop: 14,
-    padding: 17,
-    borderRadius: 16,
-    backgroundColor: '#FFF8F2',
-    borderWidth: 1,
-    borderColor: '#F4E2D1',
-  },
-  spotsTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#243038',
-  },
-  bookedText: {
-    marginTop: 5,
-    fontSize: 12,
-    color: '#7B8589',
-  },
-  progressContainer: {
-    marginTop: 14,
+  certificateWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
+    marginLeft: 2,
+  },
+  trophyIcon: {
+    fontSize: 14,
+    marginRight: 5,
+  },
+  certificateText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#007B8A',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    paddingTop: 12,
+  },
+  statCol: {
+    marginRight: 14,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#7D8C94',
+    marginBottom: 4,
+  },
+  prizeValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#007B8A',
+  },
+  feeValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#14232C',
+  },
+  spotsCol: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  spotsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  spotsUserIcon: {
+    fontSize: 12,
+    marginRight: 4,
+  },
+  spotsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#007B8A',
   },
   progressTrack: {
-    flex: 1,
-    height: 7,
-    borderRadius: 10,
-    backgroundColor: '#E9DCD0',
+    width: 120,
+    height: 4,
+    borderRadius: 3,
+    backgroundColor: '#E5EFEF',
     overflow: 'hidden',
   },
   progressFill: {
     width: '5%',
     height: '100%',
-    borderRadius: 10,
-    backgroundColor: '#167C80',
+    backgroundColor: '#007B8A',
   },
-  progressText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#667177',
+  bookedText: {
+    marginTop: 5,
+    fontSize: 10,
+    color: '#7D8C94',
   },
 });

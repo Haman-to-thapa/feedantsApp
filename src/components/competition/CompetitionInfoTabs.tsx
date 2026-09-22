@@ -1,30 +1,18 @@
 import React, {useState} from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 type TabKey = 'about' | 'judging' | 'rules';
 
 const CompetitionInfoTabs: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabKey>('about');
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Competition Information</Text>
-
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabsContainer}>
+      {/* Underline Tabs Header */}
+      <View style={styles.tabsHeader}>
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'about' && styles.activeTabButton,
-          ]}
+          style={[styles.tab, activeTab === 'about' && styles.activeTab]}
           onPress={() => setActiveTab('about')}>
           <Text
             style={[
@@ -36,10 +24,7 @@ const CompetitionInfoTabs: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'judging' && styles.activeTabButton,
-          ]}
+          style={[styles.tab, activeTab === 'judging' && styles.activeTab]}
           onPress={() => setActiveTab('judging')}>
           <Text
             style={[
@@ -51,10 +36,7 @@ const CompetitionInfoTabs: React.FC = () => {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[
-            styles.tabButton,
-            activeTab === 'rules' && styles.activeTabButton,
-          ]}
+          style={[styles.tab, activeTab === 'rules' && styles.activeTab]}
           onPress={() => setActiveTab('rules')}>
           <Text
             style={[
@@ -64,80 +46,58 @@ const CompetitionInfoTabs: React.FC = () => {
             Rules & Eligibility
           </Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
-      <View style={styles.descriptionCard}>
+      {/* Card Content */}
+      <View style={styles.card}>
         {activeTab === 'about' && (
           <>
-            <Text style={styles.descriptionTitle}>About Competition</Text>
-            <Text style={styles.descriptionText}>
-              Showcase your talent through the art of classical dance.
-              Participants can present their best performance and compete for
-              exciting rewards.
+            <Text style={styles.bodyText}>
+              This is an online classical dance competition open for all age
+              groups. Participate from anywhere and showcase your talent.
+              Express your passion through traditional dance.
             </Text>
-            <Text style={styles.descriptionText}>
-              This competition is designed to celebrate creativity, expression,
-              technique and dedication towards classical dance.
-            </Text>
+            {isExpanded && (
+              <Text style={[styles.bodyText, {marginTop: 6}]}>
+                Winners will receive attractive cash prizes and verified
+                certificates. Get feedback from experienced mentors and build
+                your artistic portfolio!
+              </Text>
+            )}
           </>
         )}
 
         {activeTab === 'judging' && (
-          <>
-            <Text style={styles.descriptionTitle}>Judging Parameters</Text>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>•</Text>
-              <Text style={styles.parameterText}>Technique and precision</Text>
-            </View>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>•</Text>
-              <Text style={styles.parameterText}>
-                Expression and presentation
-              </Text>
-            </View>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>•</Text>
-              <Text style={styles.parameterText}>
-                Creativity and choreography
-              </Text>
-            </View>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>•</Text>
-              <Text style={styles.parameterText}>Overall performance</Text>
-            </View>
-          </>
+          <View>
+            <Text style={styles.bulletItem}>• Technique and precision</Text>
+            <Text style={styles.bulletItem}>• Expression and presentation</Text>
+            <Text style={styles.bulletItem}>• Creativity and choreography</Text>
+            <Text style={styles.bulletItem}>• Overall performance</Text>
+          </View>
         )}
 
         {activeTab === 'rules' && (
-          <>
-            <Text style={styles.descriptionTitle}>Rules & Eligibility</Text>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>1.</Text>
-              <Text style={styles.parameterText}>
-                Participants must submit their own performance.
-              </Text>
-            </View>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>2.</Text>
-              <Text style={styles.parameterText}>
-                The submitted video should follow the competition guidelines.
-              </Text>
-            </View>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>3.</Text>
-              <Text style={styles.parameterText}>
-                Entries submitted after the deadline may not be considered.
-              </Text>
-            </View>
-            <View style={styles.parameterRow}>
-              <Text style={styles.bullet}>4.</Text>
-              <Text style={styles.parameterText}>
-                Judges' decision will be recorded according to the stated
-                judging criteria.
-              </Text>
-            </View>
-          </>
+          <View>
+            <Text style={styles.bulletItem}>
+              1. Participants must submit their own recorded performance.
+            </Text>
+            <Text style={styles.bulletItem}>
+              2. Video duration should adhere to standard event guidelines.
+            </Text>
+            <Text style={styles.bulletItem}>
+              3. Late entries will not be accepted for evaluation.
+            </Text>
+          </View>
         )}
+
+        <TouchableOpacity
+          style={styles.viewMoreRow}
+          onPress={() => setIsExpanded(!isExpanded)}
+          activeOpacity={0.7}>
+          <Text style={styles.viewMoreText}>
+            {isExpanded ? 'View less ∧' : 'View more ∨'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -147,74 +107,58 @@ export default CompetitionInfoTabs;
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 22,
+    marginTop: 18,
   },
-  sectionTitle: {
-    fontSize: 19,
-    fontWeight: '800',
-    color: '#16232C',
+  tabsHeader: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: '#EEF3F3',
   },
-  tabsContainer: {
-    paddingTop: 12,
-    paddingBottom: 3,
-  },
-  tabButton: {
-    paddingHorizontal: 14,
+  tab: {
     paddingVertical: 10,
-    marginRight: 8,
-    borderRadius: 22,
-    backgroundColor: '#F5F7F7',
-    borderWidth: 1,
-    borderColor: '#E8EEEE',
+    marginRight: 18,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  activeTabButton: {
-    backgroundColor: '#E5F5F4',
-    borderColor: '#C8E8E6',
+  activeTab: {
+    borderBottomColor: '#007B8A',
   },
   tabText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#758087',
+    color: '#7D8C94',
   },
   activeTabText: {
-    color: '#167C80',
+    color: '#007B8A',
     fontWeight: '800',
   },
-  descriptionCard: {
+  card: {
     marginTop: 12,
-    padding: 16,
-    borderRadius: 16,
+    padding: 14,
+    borderRadius: 14,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E8EEEE',
+    borderColor: '#EAEFEF',
   },
-  descriptionTitle: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#182A34',
-    marginBottom: 10,
+  bodyText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: '#55656F',
   },
-  descriptionText: {
-    fontSize: 13,
-    lineHeight: 21,
-    color: '#68757D',
-    marginBottom: 10,
-  },
-  parameterRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 11,
-  },
-  bullet: {
-    width: 22,
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#167C80',
-  },
-  parameterText: {
-    flex: 1,
-    fontSize: 13,
+  bulletItem: {
+    fontSize: 12,
     lineHeight: 20,
-    color: '#68757D',
+    color: '#55656F',
+    marginBottom: 4,
+  },
+  viewMoreRow: {
+    alignItems: 'center',
+    marginTop: 10,
+    paddingTop: 4,
+  },
+  viewMoreText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#007B8A',
   },
 });

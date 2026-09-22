@@ -1,11 +1,11 @@
 import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
 
 interface JudgeCardProps {
   name?: string;
   profession?: string;
   experience?: string;
-  initials?: string;
+  imageUrl?: string;
   onPressVideo?: () => void;
 }
 
@@ -13,16 +13,12 @@ const JudgeCard: React.FC<JudgeCardProps> = ({
   name = 'Manju Dubey',
   profession = 'Professional Kathak Dancer',
   experience = '12+ Years of Experience',
-  initials = 'MD',
+  imageUrl = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
   onPressVideo,
 }) => {
   return (
     <View style={styles.judgeCard}>
-      <View style={styles.judgeImageWrapper}>
-        <View style={styles.judgeImagePlaceholder}>
-          <Text style={styles.judgeInitials}>{initials}</Text>
-        </View>
-      </View>
+      <Image source={{uri: imageUrl}} style={styles.judgeImage} />
 
       <View style={styles.judgeInfo}>
         <Text style={styles.judgeLabel}>Judge</Text>
@@ -35,7 +31,9 @@ const JudgeCard: React.FC<JudgeCardProps> = ({
         style={styles.videoButton}
         activeOpacity={0.8}
         onPress={onPressVideo}>
-        <Text style={styles.playIcon}>▶</Text>
+        <View style={styles.playCircle}>
+          <Text style={styles.playIcon}>▶</Text>
+        </View>
         <Text style={styles.videoText}>Intro Video</Text>
       </TouchableOpacity>
     </View>
@@ -46,75 +44,66 @@ export default JudgeCard;
 
 const styles = StyleSheet.create({
   judgeCard: {
-    marginTop: 14,
-    minHeight: 116,
+    marginTop: 12,
     padding: 14,
     borderRadius: 16,
     backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#E9EEEE',
+    borderColor: '#EAEFEF',
     flexDirection: 'row',
     alignItems: 'center',
   },
-  judgeImageWrapper: {
+  judgeImage: {
+    width: 66,
+    height: 66,
+    borderRadius: 33,
     marginRight: 12,
-  },
-  judgeImagePlaceholder: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#E7F4F3',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  judgeInitials: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#167C80',
   },
   judgeInfo: {
     flex: 1,
   },
   judgeLabel: {
-    fontSize: 12,
-    color: '#7E8A91',
+    fontSize: 11,
+    color: '#7E8B92',
     marginBottom: 2,
   },
   judgeName: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#162A45',
+    color: '#16232C',
   },
   judgeProfession: {
-    marginTop: 5,
-    fontSize: 12,
-    color: '#68788C',
+    marginTop: 4,
+    fontSize: 11,
+    color: '#657780',
   },
   judgeExperience: {
-    marginTop: 4,
-    fontSize: 12,
-    color: '#68788C',
+    marginTop: 2,
+    fontSize: 11,
+    color: '#7E8B92',
   },
   videoButton: {
-    width: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  playCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#E4F4F4',
     alignItems: 'center',
     justifyContent: 'center',
   },
   playIcon: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: '#E8F7F8',
-    color: '#13838A',
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    fontSize: 20,
-    paddingLeft: 3,
+    fontSize: 15,
+    color: '#007B8A',
+    marginLeft: 2,
   },
   videoText: {
-    marginTop: 7,
-    fontSize: 11,
+    marginTop: 6,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#607286',
+    color: '#657780',
   },
 });

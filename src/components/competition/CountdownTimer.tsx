@@ -31,16 +31,19 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
   const format = (v: number) => String(v).padStart(2, '0');
 
   return (
-    <View style={styles.countdownCard}>
-      <Text style={styles.countdownIcon}>⌛</Text>
+    <View style={styles.banner}>
+      <View style={styles.leftGroup}>
+        <Text style={styles.hourglassIcon}>⌛</Text>
+        <Text style={styles.label}>Registration closes in</Text>
+      </View>
 
-      <Text style={styles.countdownLabel}>Registration closes in</Text>
-
-      <Text style={styles.countdownValue}>
+      <Text style={styles.timerValue}>
         {format(days)}d : {format(hours)}h : {format(minutes)}m : {format(seconds)}s
       </Text>
 
-      <Text style={styles.hurryText}>⏱ Hurry up!</Text>
+      <View style={styles.rightGroup}>
+        <Text style={styles.hurryText}>⏱ Hurry up!</Text>
+      </View>
     </View>
   );
 };
@@ -48,38 +51,41 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
 export default CountdownTimer;
 
 const styles = StyleSheet.create({
-  countdownCard: {
+  banner: {
     marginTop: 12,
-    minHeight: 52,
-    paddingHorizontal: 13,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#EAF7F7',
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+    borderRadius: 14,
+    backgroundColor: '#EBF6F6',
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
-    rowGap: 4,
+    justifyContent: 'space-between',
   },
-  countdownIcon: {
-    fontSize: 20,
-    marginRight: 8,
+  leftGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  countdownLabel: {
-    fontSize: 12,
+  hourglassIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  label: {
+    fontSize: 11,
     fontWeight: '700',
-    color: '#162A45',
-    marginRight: 10,
+    color: '#16232C',
   },
-  countdownValue: {
-    flex: 1,
-    fontSize: 15,
+  timerValue: {
+    fontSize: 13,
     fontWeight: '800',
-    color: '#087C84',
-    minWidth: 150,
+    color: '#007B8A',
+  },
+  rightGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   hurryText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#167C80',
+    color: '#007B8A',
   },
 });

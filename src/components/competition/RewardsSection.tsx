@@ -1,32 +1,43 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 
-interface RewardItem {
+interface RewardRow {
+  icon: string;
   position: string;
   amount: string;
-  subtext: string;
 }
 
-const defaultRewards: RewardItem[] = [
-  {position: '1st Winner', amount: '₹800', subtext: 'Cash Prize'},
-  {position: '2nd Winner', amount: '₹400', subtext: 'Cash Prize'},
-  {position: '3rd Winner', amount: '₹200', subtext: 'Cash Prize'},
-  {position: '4th - 6th', amount: '🏅', subtext: 'Certificate'},
+const rewardsList: RewardRow[] = [
+  {icon: '🏆', position: '1st Winner', amount: '₹ 550'},
+  {icon: '🥈', position: '2nd Winner', amount: '₹ 300'},
+  {icon: '🥉', position: '3rd Winner', amount: '₹ 240'},
+  {icon: '⭐', position: '4th Winner', amount: '₹ 200'},
+  {icon: '⭐', position: '5th Winner', amount: '₹ 130'},
+  {icon: '⭐', position: '6th Winner', amount: '₹ 80'},
 ];
 
-const RewardsSection: React.FC<{rewards?: RewardItem[]}> = ({
-  rewards = defaultRewards,
-}) => {
+const RewardsSection: React.FC = () => {
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Rewards</Text>
+      <View style={styles.headerRow}>
+        <Text style={styles.title}>Rewards</Text>
+        <Text style={styles.subTitle}>(All Positions)</Text>
+      </View>
 
-      <View style={styles.rewardsGrid}>
-        {rewards.map(item => (
-          <View key={item.position} style={styles.rewardCard}>
-            <Text style={styles.rewardPosition}>{item.position}</Text>
-            <Text style={styles.rewardAmount}>{item.amount}</Text>
-            <Text style={styles.rewardSubtext}>{item.subtext}</Text>
+      <View style={styles.card}>
+        {rewardsList.map((item, idx) => (
+          <View
+            key={item.position}
+            style={[
+              styles.row,
+              idx < rewardsList.length - 1 && styles.rowBorder,
+            ]}>
+            <View style={styles.left}>
+              <Text style={styles.icon}>{item.icon}</Text>
+              <Text style={styles.position}>{item.position}</Text>
+            </View>
+
+            <Text style={styles.amount}>{item.amount}</Text>
           </View>
         ))}
       </View>
@@ -38,42 +49,56 @@ export default RewardsSection;
 
 const styles = StyleSheet.create({
   section: {
-    marginTop: 22,
+    marginTop: 18,
   },
-  sectionTitle: {
-    fontSize: 19,
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 15,
     fontWeight: '800',
     color: '#16232C',
   },
-  rewardsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-    marginTop: 12,
-  },
-  rewardCard: {
-    width: '48%',
-    minHeight: 110,
-    padding: 15,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E8EEEE',
-    justifyContent: 'center',
-  },
-  rewardPosition: {
+  subTitle: {
     fontSize: 12,
-    color: '#738088',
-    marginBottom: 7,
+    color: '#7D8C94',
+    marginLeft: 6,
   },
-  rewardAmount: {
-    fontSize: 23,
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#EAEFEF',
+    paddingHorizontal: 14,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 11,
+  },
+  rowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F6F6',
+  },
+  left: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    fontSize: 15,
+    marginRight: 10,
+  },
+  position: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#16232C',
+  },
+  amount: {
+    fontSize: 13,
     fontWeight: '800',
-    color: '#167C80',
-  },
-  rewardSubtext: {
-    marginTop: 4,
-    fontSize: 11,
-    color: '#8A949A',
+    color: '#007B8A',
   },
 });

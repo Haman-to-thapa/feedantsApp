@@ -2,7 +2,7 @@ import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 interface CompetitionHeaderProps {
-  onBack: () => void;
+  onBack?: () => void;
 }
 
 const CompetitionHeader: React.FC<CompetitionHeaderProps> = ({onBack}) => {
@@ -14,30 +14,37 @@ const CompetitionHeader: React.FC<CompetitionHeaderProps> = ({onBack}) => {
         style={styles.backButton}
         activeOpacity={0.7}
         onPress={onBack}>
-        <Text style={styles.backIcon}>‹</Text>
+        <Text style={styles.backArrow}>←</Text>
+        <Text style={styles.backText}>Go back</Text>
       </TouchableOpacity>
 
       <View style={styles.languageContainer}>
-        <TouchableOpacity onPress={() => setSelectedLang('ENG')}>
+        <TouchableOpacity
+          style={[
+            styles.langPill,
+            selectedLang === 'ENG' && styles.activeLangPill,
+          ]}
+          onPress={() => setSelectedLang('ENG')}>
           <Text
-            style={
-              selectedLang === 'ENG'
-                ? styles.activeLanguage
-                : styles.inactiveLanguage
-            }>
+            style={[
+              styles.langText,
+              selectedLang === 'ENG' && styles.activeLangText,
+            ]}>
             ENG
           </Text>
         </TouchableOpacity>
 
-        <Text style={styles.separator}>|</Text>
-
-        <TouchableOpacity onPress={() => setSelectedLang('HIN')}>
+        <TouchableOpacity
+          style={[
+            styles.langPill,
+            selectedLang === 'HIN' && styles.activeLangPill,
+          ]}
+          onPress={() => setSelectedLang('HIN')}>
           <Text
-            style={
-              selectedLang === 'HIN'
-                ? styles.activeLanguage
-                : styles.inactiveLanguage
-            }>
+            style={[
+              styles.langText,
+              selectedLang === 'HIN' && styles.activeLangText,
+            ]}>
             हिंदी
           </Text>
         </TouchableOpacity>
@@ -50,43 +57,51 @@ export default CompetitionHeader;
 
 const styles = StyleSheet.create({
   header: {
-    height: 55,
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 6,
   },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingVertical: 6,
+    paddingRight: 10,
   },
-  backIcon: {
-    fontSize: 38,
-    lineHeight: 38,
-    color: '#1E293B',
+  backArrow: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#16232C',
+    marginRight: 8,
+  },
+  backText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#16232C',
   },
   languageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    padding: 3,
+    borderRadius: 20,
+    backgroundColor: '#F3F6F6',
+  },
+  langPill: {
     paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 18,
-    backgroundColor: '#F4F7F7',
+    paddingVertical: 5,
+    borderRadius: 16,
   },
-  activeLanguage: {
+  activeLangPill: {
+    backgroundColor: '#007B8A',
+  },
+  langText: {
     fontSize: 12,
+    fontWeight: '600',
+    color: '#6E7A81',
+  },
+  activeLangText: {
+    color: '#FFFFFF',
     fontWeight: '700',
-    color: '#167C80',
-  },
-  separator: {
-    marginHorizontal: 6,
-    color: '#A0A0A0',
-  },
-  inactiveLanguage: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#777777',
   },
 });

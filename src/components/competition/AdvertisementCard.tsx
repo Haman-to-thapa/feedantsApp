@@ -1,0 +1,37 @@
+import React from 'react';
+import {View, Text, StyleSheet} from 'react-native';
+
+const AdvertisementCard: React.FC = () => {
+  return (
+    <View style={styles.card}>
+      <Text style={styles.icon}>📢</Text>
+      <Text style={styles.text}>Ad Here</Text>
+    </View>
+  );
+};
+
+export default AdvertisementCard;
+
+const styles = StyleSheet.create({
+  card: {
+    marginTop: 12,
+    height: 38,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E6EAEA',
+    borderStyle: 'dashed',
+    backgroundColor: '#FAFCFC',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  icon: {
+    fontSize: 13,
+    marginRight: 6,
+  },
+  text: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#7D8C94',
+  },
+});

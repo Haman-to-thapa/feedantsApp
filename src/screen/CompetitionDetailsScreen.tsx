@@ -10,48 +10,60 @@ import ImportantDates from '../components/competition/ImportantDates';
 import PreviousWinners from '../components/competition/PreviousWinners';
 import CompetitionInfoTabs from '../components/competition/CompetitionInfoTabs';
 import RewardsSection from '../components/competition/RewardsSection';
-import PrizeMoneyCard from '../components/competition/PrizeMoneyCard';
 import CompetitionPolicies from '../components/competition/CompetitionPolicies';
+import ReferAndEarnCard from '../components/competition/ReferAndEarnCard';
+import UserReviews from '../components/competition/UserReviews';
+import AdvertisementCard from '../components/competition/AdvertisementCard';
+import UploadSubmissionButton from '../components/competition/UploadSubmissionButton';
 
 const CompetitionDetailsScreen = () => {
   const navigation = useNavigation<any>();
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
+      <StatusBar barStyle="dark-content" {...({backgroundColor: '#F8FAFA'} as any)} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.contentContainer}>
-        {/* Top Header */}
+        {/* ← Go back | ENG हिंदी */}
         <CompetitionHeader onBack={() => navigation.goBack()} />
 
-        {/* Title, tags, prize cards, and spots bar */}
+        {/* Title, Registered badge, tags, Prize/Fee/Spots 3-col */}
         <CompetitionHero />
 
-        {/* Judge info and intro video */}
+        {/* Judge Card with photo & intro video */}
         <JudgeCard />
 
-        {/* Live registration countdown */}
+        {/* Live Countdown Banner */}
         <CountdownTimer />
 
-        {/* Important dates schedule */}
+        {/* 2x2 Important Dates Grid */}
         <ImportantDates />
 
-        {/* Previous winners horizontal carousel */}
+        {/* Previous Winners with video thumbnails */}
         <PreviousWinners />
 
-        {/* Information tabs (About / Judging / Rules) */}
+        {/* Underline Tabs: About / Judging / Rules */}
         <CompetitionInfoTabs />
 
-        {/* Rewards breakdown (1st - 6th) */}
+        {/* Rewards List (1st - 6th Winner) */}
         <RewardsSection />
 
-        {/* Prize money video/card */}
-        <PrizeMoneyCard />
-
-        {/* Disclaimer, Refund Policy, and Razorpay Secure Payment */}
+        {/* Disclaimer Banner + Side-by-side Prize Video & Razorpay */}
         <CompetitionPolicies />
+
+        {/* Refer & Earn More Discount with link copy */}
+        <ReferAndEarnCard />
+
+        {/* Hear From Our Users bar */}
+        <UserReviews />
+
+        {/* Ad Here Box */}
+        <AdvertisementCard />
+
+        {/* Upload Submission Button */}
+        <UploadSubmissionButton />
       </ScrollView>
     </SafeAreaView>
   );
@@ -62,10 +74,11 @@ export default CompetitionDetailsScreen;
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFA',
   },
   contentContainer: {
-    paddingHorizontal: 18,
-    paddingBottom: 30,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 25,
   },
 });

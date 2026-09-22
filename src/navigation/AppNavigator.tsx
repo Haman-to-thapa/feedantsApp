@@ -16,6 +16,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator = () => {
   return (
     <Stack.Navigator
+      initialRouteName="CompetitionDetails"
       screenOptions={{
         headerShown: false,
       }}>
