@@ -2,6 +2,43 @@ import Competition from '../models/Competition.js';
 import User from '../models/User.js';
 import Participation from '../models/Participation.js';
 
+export const getCompetitionById = async (req, res) => {
+  try {
+    const {competitionId} = req.params;
+
+    // Search by MongoDB _id OR custom competitionId (e.g. 'classical-dance-001')
+    let competition = null;
+    if (competitionId.match(/^[0-9a-fA-F]{24}$/)) {
+      competition = await Competition.findById(competitionId).lean();
+    }
+    if (!competition) {
+      competition = await Competition.findOne({competitionId}).lean();
+    }
+    if (!competition) {
+      // Return first available competition as fallback
+      competition = await Competition.findOne().lean();
+    }
+
+    if (!competition) {
+      return res.status(404).json({
+        success: false,
+        message: 'Competition not found',
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: competition,
+    });
+  } catch (error) {
+    console.error('Get competition error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
+
 export const registerForCompetition = async (req, res) => {
   try {
     const {competitionId} = req.params;
@@ -16,7 +53,13 @@ export const registerForCompetition = async (req, res) => {
     }
 
     // 2. Find competition
-    const competition = await Competition.findById(competitionId);
+    let competition = null;
+    if (competitionId.match(/^[0-9a-fA-F]{24}$/)) {
+      competition = await Competition.findById(competitionId);
+    }
+    if (!competition) {
+      competition = await Competition.findOne({competitionId});
+    }
 
     if (!competition) {
       return res.status(404).json({

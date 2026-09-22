@@ -3,7 +3,33 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 type TabKey = 'about' | 'judging' | 'rules';
 
-const CompetitionInfoTabs: React.FC = () => {
+interface CompetitionInfoTabsProps {
+  about?: string;
+  judgingParameters?: string[];
+  rules?: string[];
+}
+
+const defaultAbout =
+  'This is an online classical dance competition open for all age groups. Participate from anywhere and showcase your talent. Express your passion through traditional dance.';
+
+const defaultJudging = [
+  'Technique and precision',
+  'Expression and presentation',
+  'Creativity and choreography',
+  'Overall performance',
+];
+
+const defaultRules = [
+  'Participants must submit their own recorded performance.',
+  'Video duration should adhere to standard event guidelines.',
+  'Late entries will not be accepted for evaluation.',
+];
+
+const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
+  about = defaultAbout,
+  judgingParameters = defaultJudging,
+  rules = defaultRules,
+}) => {
   const [activeTab, setActiveTab] = useState<TabKey>('about');
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -52,11 +78,7 @@ const CompetitionInfoTabs: React.FC = () => {
       <View style={styles.card}>
         {activeTab === 'about' && (
           <>
-            <Text style={styles.bodyText}>
-              This is an online classical dance competition open for all age
-              groups. Participate from anywhere and showcase your talent.
-              Express your passion through traditional dance.
-            </Text>
+            <Text style={styles.bodyText}>{about || defaultAbout}</Text>
             {isExpanded && (
               <Text style={[styles.bodyText, {marginTop: 6}]}>
                 Winners will receive attractive cash prizes and verified
@@ -69,24 +91,24 @@ const CompetitionInfoTabs: React.FC = () => {
 
         {activeTab === 'judging' && (
           <View>
-            <Text style={styles.bulletItem}>• Technique and precision</Text>
-            <Text style={styles.bulletItem}>• Expression and presentation</Text>
-            <Text style={styles.bulletItem}>• Creativity and choreography</Text>
-            <Text style={styles.bulletItem}>• Overall performance</Text>
+            {(judgingParameters.length > 0
+              ? judgingParameters
+              : defaultJudging
+            ).map(param => (
+              <Text key={param} style={styles.bulletItem}>
+                • {param}
+              </Text>
+            ))}
           </View>
         )}
 
         {activeTab === 'rules' && (
           <View>
-            <Text style={styles.bulletItem}>
-              1. Participants must submit their own recorded performance.
-            </Text>
-            <Text style={styles.bulletItem}>
-              2. Video duration should adhere to standard event guidelines.
-            </Text>
-            <Text style={styles.bulletItem}>
-              3. Late entries will not be accepted for evaluation.
-            </Text>
+            {(rules.length > 0 ? rules : defaultRules).map((r, i) => (
+              <Text key={r + i} style={styles.bulletItem}>
+                {i + 1}. {r}
+              </Text>
+            ))}
           </View>
         )}
 
@@ -103,7 +125,7 @@ const CompetitionInfoTabs: React.FC = () => {
   );
 };
 
-export default CompetitionInfoTabs;
+export default React.memo(CompetitionInfoTabs);
 
 const styles = StyleSheet.create({
   section: {

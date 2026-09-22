@@ -7,7 +7,11 @@ interface RewardRow {
   amount: string;
 }
 
-const rewardsList: RewardRow[] = [
+interface RewardsSectionProps {
+  rewards?: any;
+}
+
+const defaultRewardsList: RewardRow[] = [
   {icon: '🏆', position: '1st Winner', amount: '₹ 550'},
   {icon: '🥈', position: '2nd Winner', amount: '₹ 300'},
   {icon: '🥉', position: '3rd Winner', amount: '₹ 240'},
@@ -16,7 +20,30 @@ const rewardsList: RewardRow[] = [
   {icon: '⭐', position: '6th Winner', amount: '₹ 80'},
 ];
 
-const RewardsSection: React.FC = () => {
+const RewardsSection: React.FC<RewardsSectionProps> = ({rewards}) => {
+  let list: RewardRow[] = defaultRewardsList;
+
+  if (rewards && typeof rewards === 'object') {
+    if (Array.isArray(rewards) && rewards.length > 0) {
+      list = rewards.map((r, i) => ({
+        icon: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐',
+        position: r.position || `${i + 1}th Winner`,
+        amount: typeof r.amount === 'number' ? `₹ ${r.amount}` : r.amount,
+      }));
+    } else if (rewards.first !== undefined) {
+      list = [
+        {icon: '🏆', position: '1st Winner', amount: `₹ ${rewards.first}`},
+        {icon: '🥈', position: '2nd Winner', amount: `₹ ${rewards.second}`},
+        {icon: '🥉', position: '3rd Winner', amount: `₹ ${rewards.third}`},
+        {
+          icon: '⭐',
+          position: '4th - 6th',
+          amount: String(rewards.fourthToSixth || 'Certificate'),
+        },
+      ];
+    }
+  }
+
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
@@ -25,12 +52,12 @@ const RewardsSection: React.FC = () => {
       </View>
 
       <View style={styles.card}>
-        {rewardsList.map((item, idx) => (
+        {list.map((item, idx) => (
           <View
-            key={item.position}
+            key={item.position + idx}
             style={[
               styles.row,
-              idx < rewardsList.length - 1 && styles.rowBorder,
+              idx < list.length - 1 && styles.rowBorder,
             ]}>
             <View style={styles.left}>
               <Text style={styles.icon}>{item.icon}</Text>

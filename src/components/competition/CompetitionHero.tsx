@@ -1,28 +1,58 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 
-const CompetitionHero: React.FC = () => {
+interface CompetitionHeroProps {
+  title?: string;
+  category?: string;
+  tags?: string[];
+  prizePool?: number;
+  entryFee?: number;
+  maxParticipants?: number;
+  registeredCount?: number;
+  isRegistered?: boolean;
+}
+
+const CompetitionHero: React.FC<CompetitionHeroProps> = ({
+  title = 'Feedants Classical Dance',
+  category = 'Dance',
+  tags = ['Dance', 'Multi-Win'],
+  prizePool = 1500,
+  entryFee = 99,
+  maxParticipants = 20,
+  registeredCount = 1,
+  isRegistered = true,
+}) => {
+  const spotsLeft = Math.max(maxParticipants - registeredCount, 0);
+  const progressPercent = Math.min(
+    Math.round((registeredCount / maxParticipants) * 100),
+    100,
+  );
+
   return (
     <View style={styles.card}>
       {/* Title and Registered Badge */}
       <View style={styles.titleRow}>
-        <Text style={styles.title}>Feedants Classical Dance</Text>
+        <Text style={styles.title}>{title}</Text>
 
-        <View style={styles.registeredBadge}>
-          <Text style={styles.checkIcon}>✔</Text>
-          <Text style={styles.registeredText}>Registered</Text>
-        </View>
+        {isRegistered && (
+          <View style={styles.registeredBadge}>
+            <Text style={styles.checkIcon}>✔</Text>
+            <Text style={styles.registeredText}>Registered</Text>
+          </View>
+        )}
       </View>
 
       {/* Tags and Certificate */}
       <View style={styles.tagsRow}>
         <View style={styles.tag}>
-          <Text style={styles.tagText}>Dance</Text>
+          <Text style={styles.tagText}>{category || tags[0] || 'Dance'}</Text>
         </View>
 
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>Multi-Win</Text>
-        </View>
+        {tags.length > 1 && (
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{tags[1]}</Text>
+          </View>
+        )}
 
         <View style={styles.certificateWrapper}>
           <Text style={styles.trophyIcon}>🏆</Text>
@@ -35,27 +65,31 @@ const CompetitionHero: React.FC = () => {
         {/* Prize Pool */}
         <View style={styles.statCol}>
           <Text style={styles.statLabel}>Prize Pool</Text>
-          <Text style={styles.prizeValue}>₹ 1,500</Text>
+          <Text style={styles.prizeValue}>
+            ₹ {prizePool?.toLocaleString('en-IN')}
+          </Text>
         </View>
 
         {/* Entry Fee */}
         <View style={styles.statCol}>
           <Text style={styles.statLabel}>Entry Fee</Text>
-          <Text style={styles.feeValue}>₹ 99</Text>
+          <Text style={styles.feeValue}>₹ {entryFee}</Text>
         </View>
 
         {/* Spots */}
         <View style={styles.spotsCol}>
           <View style={styles.spotsHeader}>
             <Text style={styles.spotsUserIcon}>👥</Text>
-            <Text style={styles.spotsTitle}>Only 19 spots left</Text>
+            <Text style={styles.spotsTitle}>Only {spotsLeft} spots left</Text>
           </View>
 
           <View style={styles.progressTrack}>
-            <View style={styles.progressFill} />
+            <View style={[styles.progressFill, {width: `${progressPercent}%`}]} />
           </View>
 
-          <Text style={styles.bookedText}>1 / 20 Booked</Text>
+          <Text style={styles.bookedText}>
+            {registeredCount} / {maxParticipants} Booked
+          </Text>
         </View>
       </View>
     </View>
@@ -189,7 +223,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   progressFill: {
-    width: '5%',
     height: '100%',
     backgroundColor: '#007B8A',
   },
