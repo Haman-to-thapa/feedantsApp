@@ -45,7 +45,7 @@ const RewardsSection: React.FC = () => {
   );
 };
 
-export default RewardsSection;
+export default React.memo(RewardsSection);
 
 const styles = StyleSheet.create({
   section: {

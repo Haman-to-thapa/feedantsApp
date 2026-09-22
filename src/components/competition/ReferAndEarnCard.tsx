@@ -46,7 +46,7 @@ const ReferAndEarnCard: React.FC = () => {
   );
 };
 
-export default ReferAndEarnCard;
+export default React.memo(ReferAndEarnCard);
 
 const styles = StyleSheet.create({
   card: {

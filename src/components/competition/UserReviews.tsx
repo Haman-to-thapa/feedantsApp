@@ -23,7 +23,7 @@ const UserReviews: React.FC<HearFromUsersProps> = ({onPress}) => {
   );
 };
 
-export default UserReviews;
+export default React.memo(UserReviews);
 
 const styles = StyleSheet.create({
   card: {

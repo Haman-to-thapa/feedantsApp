@@ -65,7 +65,7 @@ const PreviousWinners: React.FC = () => {
   );
 };
 
-export default PreviousWinners;
+export default React.memo(PreviousWinners);
 
 const styles = StyleSheet.create({
   section: {

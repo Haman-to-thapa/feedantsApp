@@ -63,7 +63,7 @@ const CompetitionPolicies: React.FC<CompetitionPoliciesProps> = ({
   );
 };
 
-export default CompetitionPolicies;
+export default React.memo(CompetitionPolicies);
 
 const styles = StyleSheet.create({
   container: {

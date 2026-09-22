@@ -1,10 +1,15 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
+import dns from 'dns';
 import mongoose from 'mongoose';
 
 import connectDB from './config/db.js';
 import Competition from './models/Competition.js';
 
-dotenv.config();
+try {
+  dns.setServers(['8.8.8.8', '8.8.4.4']);
+} catch (e) {
+  // fallback
+}
 
 const seedCompetition = async () => {
   try {

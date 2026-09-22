@@ -62,7 +62,7 @@ const CompetitionHero: React.FC = () => {
   );
 };
 
-export default CompetitionHero;
+export default React.memo(CompetitionHero);
 
 const styles = StyleSheet.create({
   card: {

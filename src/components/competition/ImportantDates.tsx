@@ -63,7 +63,7 @@ const ImportantDates: React.FC = () => {
   );
 };
 
-export default ImportantDates;
+export default React.memo(ImportantDates);
 
 const styles = StyleSheet.create({
   section: {

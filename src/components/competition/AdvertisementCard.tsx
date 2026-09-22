@@ -10,7 +10,7 @@ const AdvertisementCard: React.FC = () => {
   );
 };
 
-export default AdvertisementCard;
+export default React.memo(AdvertisementCard);
 
 const styles = StyleSheet.create({
   card: {

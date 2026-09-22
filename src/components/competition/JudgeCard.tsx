@@ -40,7 +40,7 @@ const JudgeCard: React.FC<JudgeCardProps> = ({
   );
 };
 
-export default JudgeCard;
+export default React.memo(JudgeCard);
 
 const styles = StyleSheet.create({
   judgeCard: {

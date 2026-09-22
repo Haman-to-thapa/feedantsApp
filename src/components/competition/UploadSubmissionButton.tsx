@@ -19,7 +19,7 @@ const UploadSubmissionButton: React.FC<UploadSubmissionButtonProps> = ({
   );
 };
 
-export default UploadSubmissionButton;
+export default React.memo(UploadSubmissionButton);
 
 const styles = StyleSheet.create({
   button: {
