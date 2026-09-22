@@ -26,9 +26,9 @@ const defaultRules = [
 ];
 
 const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
-  about = defaultAbout,
-  judgingParameters = defaultJudging,
-  rules = defaultRules,
+  about = '',
+  judgingParameters = [],
+  rules = [],
 }) => {
   const [activeTab, setActiveTab] = useState<TabKey>('about');
   const [isExpanded, setIsExpanded] = useState(false);

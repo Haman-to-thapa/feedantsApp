@@ -14,22 +14,23 @@ interface CompetitionHeroProps {
 }
 
 const CompetitionHero: React.FC<CompetitionHeroProps> = ({
-  title = 'Feedants Classical Dance',
-  category = 'Dance',
-  tags = ['Dance', 'Multi-Win'],
-  prizePool = 1500,
-  entryFee = 99,
-  maxParticipants = 20,
-  registeredCount = 1,
+  title = '',
+  category = '',
+  tags = [],
+  prizePool = 0,
+  entryFee = 0,
+  maxParticipants = 0,
+  registeredCount = 0,
   remainingSpots,
-  isRegistered = true,
+  isRegistered = false,
 }) => {
+  const totalSpots = maxParticipants > 0 ? maxParticipants : 1;
   const spotsLeft =
     remainingSpots !== undefined
       ? remainingSpots
       : Math.max(maxParticipants - registeredCount, 0);
   const progressPercent = Math.min(
-    Math.round((registeredCount / maxParticipants) * 100),
+    Math.round((registeredCount / totalSpots) * 100),
     100,
   );
 
@@ -49,9 +50,11 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
 
       {/* Tags and Certificate */}
       <View style={styles.tagsRow}>
-        <View style={styles.tag}>
-          <Text style={styles.tagText}>{category || tags[0] || 'Dance'}</Text>
-        </View>
+        {(category || tags[0]) ? (
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{category || tags[0]}</Text>
+          </View>
+        ) : null}
 
         {tags.length > 1 && (
           <View style={styles.tag}>

@@ -1,7 +1,44 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 
-const ImportantDates: React.FC = () => {
+interface ImportantDatesProps {
+  registrationEnd?: string | Date;
+  submissionStart?: string | Date;
+  submissionEnd?: string | Date;
+  resultDate?: string | Date;
+}
+
+const formatDate = (dateValue?: string | Date) => {
+  if (!dateValue) return {date: 'TBA', time: ''};
+  const d = new Date(dateValue);
+  if (isNaN(d.getTime())) return {date: 'TBA', time: ''};
+
+  const day = d.getDate();
+  const month = d.toLocaleDateString('en-IN', {month: 'short'});
+  const year = String(d.getFullYear()).slice(-2);
+  const time = d.toLocaleTimeString('en-IN', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  });
+
+  return {
+    date: `${day} ${month} ${year}`,
+    time,
+  };
+};
+
+const ImportantDates: React.FC<ImportantDatesProps> = ({
+  registrationEnd,
+  submissionStart,
+  submissionEnd,
+  resultDate,
+}) => {
+  const regEnd = formatDate(registrationEnd);
+  const subStart = formatDate(submissionStart);
+  const subEnd = formatDate(submissionEnd);
+  const resDate = formatDate(resultDate);
+
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>Important Dates</Text>
@@ -14,8 +51,8 @@ const ImportantDates: React.FC = () => {
             <Text style={styles.icon}>📅</Text>
             <View style={styles.cellContent}>
               <Text style={styles.label}>Register Before</Text>
-              <Text style={styles.date}>10 Aug 26</Text>
-              <Text style={styles.time}>11:50 PM</Text>
+              <Text style={styles.date}>{regEnd.date}</Text>
+              {regEnd.time ? <Text style={styles.time}>{regEnd.time}</Text> : null}
             </View>
           </View>
 
@@ -26,8 +63,8 @@ const ImportantDates: React.FC = () => {
             <Text style={styles.icon}>✈</Text>
             <View style={styles.cellContent}>
               <Text style={styles.label}>Submission Starts</Text>
-              <Text style={styles.date}>6 Aug 26</Text>
-              <Text style={styles.time}>04:00 AM</Text>
+              <Text style={styles.date}>{subStart.date}</Text>
+              {subStart.time ? <Text style={styles.time}>{subStart.time}</Text> : null}
             </View>
           </View>
         </View>
@@ -41,8 +78,8 @@ const ImportantDates: React.FC = () => {
             <Text style={styles.icon}>📤</Text>
             <View style={styles.cellContent}>
               <Text style={styles.label}>Submission Ends</Text>
-              <Text style={styles.date}>30 Aug 26</Text>
-              <Text style={styles.time}>11:55 PM</Text>
+              <Text style={styles.date}>{subEnd.date}</Text>
+              {subEnd.time ? <Text style={styles.time}>{subEnd.time}</Text> : null}
             </View>
           </View>
 
@@ -53,8 +90,8 @@ const ImportantDates: React.FC = () => {
             <Text style={styles.icon}>🏆</Text>
             <View style={styles.cellContent}>
               <Text style={styles.label}>Result Date</Text>
-              <Text style={styles.date}>1 Sept 26</Text>
-              <Text style={styles.time}>11:50 PM</Text>
+              <Text style={styles.date}>{resDate.date}</Text>
+              {resDate.time ? <Text style={styles.time}>{resDate.time}</Text> : null}
             </View>
           </View>
         </View>

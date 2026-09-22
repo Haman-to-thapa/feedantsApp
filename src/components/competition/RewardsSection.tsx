@@ -11,17 +11,8 @@ interface RewardsSectionProps {
   rewards?: any;
 }
 
-const defaultRewardsList: RewardRow[] = [
-  {icon: '🏆', position: '1st Winner', amount: '₹ 550'},
-  {icon: '🥈', position: '2nd Winner', amount: '₹ 300'},
-  {icon: '🥉', position: '3rd Winner', amount: '₹ 240'},
-  {icon: '⭐', position: '4th Winner', amount: '₹ 200'},
-  {icon: '⭐', position: '5th Winner', amount: '₹ 130'},
-  {icon: '⭐', position: '6th Winner', amount: '₹ 80'},
-];
-
 const RewardsSection: React.FC<RewardsSectionProps> = ({rewards}) => {
-  let list: RewardRow[] = defaultRewardsList;
+  let list: RewardRow[] = [];
 
   if (rewards && typeof rewards === 'object') {
     if (Array.isArray(rewards) && rewards.length > 0) {
@@ -42,6 +33,10 @@ const RewardsSection: React.FC<RewardsSectionProps> = ({rewards}) => {
         },
       ];
     }
+  }
+
+  if (list.length === 0) {
+    return null;
   }
 
   return (

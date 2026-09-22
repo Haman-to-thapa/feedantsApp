@@ -10,21 +10,38 @@ interface JudgeCardProps {
 }
 
 const JudgeCard: React.FC<JudgeCardProps> = ({
-  name = 'Manju Dubey',
-  profession = 'Professional Kathak Dancer',
-  experience = '12+ Years of Experience',
-  imageUrl = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=200&q=80',
+  name = '',
+  profession = '',
+  experience = '',
+  imageUrl = '',
   onPressVideo,
 }) => {
+  // If no judge data is provided, do not render an empty card
+  if (!name && !profession && !imageUrl) {
+    return null;
+  }
+
   return (
     <View style={styles.judgeCard}>
-      <Image source={{uri: imageUrl}} style={styles.judgeImage} />
+      {imageUrl ? (
+        <Image source={{uri: imageUrl}} style={styles.judgeImage} />
+      ) : (
+        <View style={[styles.judgeImage, styles.placeholderImage]}>
+          <Text style={styles.placeholderText}>
+            {name ? name.charAt(0).toUpperCase() : 'J'}
+          </Text>
+        </View>
+      )}
 
       <View style={styles.judgeInfo}>
         <Text style={styles.judgeLabel}>Judge</Text>
-        <Text style={styles.judgeName}>{name}</Text>
-        <Text style={styles.judgeProfession}>{profession}</Text>
-        <Text style={styles.judgeExperience}>{experience}</Text>
+        {name ? <Text style={styles.judgeName}>{name}</Text> : null}
+        {profession ? (
+          <Text style={styles.judgeProfession}>{profession}</Text>
+        ) : null}
+        {experience ? (
+          <Text style={styles.judgeExperience}>{experience}</Text>
+        ) : null}
       </View>
 
       <TouchableOpacity
@@ -58,6 +75,16 @@ const styles = StyleSheet.create({
     height: 66,
     borderRadius: 33,
     marginRight: 12,
+  },
+  placeholderImage: {
+    backgroundColor: '#E4F4F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#007B8A',
   },
   judgeInfo: {
     flex: 1,

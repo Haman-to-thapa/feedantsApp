@@ -317,8 +317,13 @@ const CompetitionDetailsScreen = () => {
         {/* Step 14.9: Live Countdown Timer driven by MongoDB registrationEnd */}
         <CountdownTimer targetDate={competition?.registrationEnd} />
 
-        {/* 2x2 Important Dates Grid */}
-        <ImportantDates />
+        {/* 2x2 Important Dates Grid from MongoDB */}
+        <ImportantDates
+          registrationEnd={competition?.registrationEnd}
+          submissionStart={competition?.submissionStart}
+          submissionEnd={competition?.submissionEnd}
+          resultDate={competition?.resultDate}
+        />
 
         {/* Previous Winners with video thumbnails */}
         <PreviousWinners />
