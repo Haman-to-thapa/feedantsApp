@@ -15,7 +15,6 @@ export const getCompetitionById = async (req, res) => {
       competition = await Competition.findOne({competitionId}).lean();
     }
     if (!competition) {
-      // Return first available competition as fallback
       competition = await Competition.findOne().lean();
     }
 
@@ -32,6 +31,60 @@ export const getCompetitionById = async (req, res) => {
     });
   } catch (error) {
     console.error('Get competition error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+};
+
+export const getParticipation = async (req, res) => {
+  try {
+    const {competitionId} = req.params;
+    const {email} = req.query;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+    });
+
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        registered: false,
+        participation: null,
+      });
+    }
+
+    let comp = null;
+    if (competitionId.match(/^[0-9a-fA-F]{24}$/)) {
+      comp = await Competition.findById(competitionId);
+    }
+    if (!comp) {
+      comp = await Competition.findOne({competitionId});
+    }
+    if (!comp) {
+      comp = await Competition.findOne();
+    }
+
+    const participation = await Participation.findOne({
+      userId: user._id,
+      competitionId: comp ? comp._id : competitionId,
+    }).lean();
+
+    return res.status(200).json({
+      success: true,
+      registered: !!participation,
+      participation,
+    });
+  } catch (error) {
+    console.error('Participation check error:', error);
     return res.status(500).json({
       success: false,
       message: 'Server error',
@@ -60,6 +113,9 @@ export const registerForCompetition = async (req, res) => {
     if (!competition) {
       competition = await Competition.findOne({competitionId});
     }
+    if (!competition) {
+      competition = await Competition.findOne();
+    }
 
     if (!competition) {
       return res.status(404).json({
@@ -82,12 +138,12 @@ export const registerForCompetition = async (req, res) => {
     }
 
     // 4. Find/create user
-    let user = await User.findOne({email});
+    let user = await User.findOne({email: email.toLowerCase()});
 
     if (!user) {
       user = await User.create({
         name,
-        email,
+        email: email.toLowerCase(),
       });
     }
 

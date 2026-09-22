@@ -2,44 +2,88 @@ import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 interface UploadSubmissionButtonProps {
-  onPress?: () => void;
+  isRegistered?: boolean;
+  entryFee?: number;
+  onPress: () => void;
 }
 
 const UploadSubmissionButton: React.FC<UploadSubmissionButtonProps> = ({
-  onPress = () => console.log('Upload Submission pressed'),
+  isRegistered = false,
+  entryFee = 99,
+  onPress,
 }) => {
   return (
-    <TouchableOpacity
-      style={styles.button}
-      activeOpacity={0.88}
-      onPress={onPress}>
-      <Text style={styles.title}>Upload Submission</Text>
-      <Text style={styles.status}>Registered</Text>
-    </TouchableOpacity>
+    <View style={styles.submissionSection}>
+      <TouchableOpacity
+        style={styles.submissionButton}
+        activeOpacity={0.85}
+        onPress={onPress}>
+        <Text style={styles.uploadIcon}>
+          {isRegistered ? '↑' : '✓'}
+        </Text>
+
+        <View style={styles.centerTextContainer}>
+          <Text style={styles.submissionTitle}>
+            {isRegistered ? 'Upload Submission' : 'Register Now'}
+          </Text>
+
+          <Text style={styles.submissionStatus}>
+            {isRegistered ? 'Registered' : `Entry Fee ₹${entryFee}`}
+          </Text>
+        </View>
+
+        <Text style={styles.arrow}>›</Text>
+      </TouchableOpacity>
+    </View>
   );
 };
 
 export default React.memo(UploadSubmissionButton);
 
 const styles = StyleSheet.create({
-  button: {
-    marginTop: 14,
+  submissionSection: {
+    marginTop: 16,
     marginBottom: 8,
-    height: 52,
+  },
+  submissionButton: {
+    height: 54,
     borderRadius: 12,
     backgroundColor: '#006E7D',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    elevation: 3,
+    shadowColor: '#006E7D',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+  },
+  uploadIcon: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#BFE7E3',
+    width: 24,
+  },
+  centerTextContainer: {
     alignItems: 'center',
   },
-  title: {
-    fontSize: 13,
+  submissionTitle: {
+    fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
   },
-  status: {
+  submissionStatus: {
     marginTop: 2,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: '#BFE7E3',
+  },
+  arrow: {
+    fontSize: 22,
+    fontWeight: '400',
+    color: '#BFE7E3',
+    width: 24,
+    textAlign: 'right',
   },
 });
