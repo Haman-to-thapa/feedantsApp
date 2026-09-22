@@ -23,6 +23,12 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
+// Request logger for debugging
+app.use((req, res, next) => {
+  console.log(`📥 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 // Rate limiter: max 100 requests per 15 minutes per IP
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,

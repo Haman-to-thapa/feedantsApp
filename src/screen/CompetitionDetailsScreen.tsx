@@ -26,14 +26,8 @@ import UserReviews from '../components/competition/UserReviews';
 import AdvertisementCard from '../components/competition/AdvertisementCard';
 import UploadSubmissionButton from '../components/competition/UploadSubmissionButton';
 
-import AsyncStorage from '../utils/storage';
+import {useCompetition} from '../context/CompetitionContext';
 import {pick, types} from '../utils/documentPicker';
-import {
-  getCompetition,
-  registerCompetition,
-  getParticipation,
-  uploadSubmission,
-} from '../services/api';
 
 const CompetitionDetailsScreen = () => {
   const navigation = useNavigation<any>();
@@ -41,87 +35,38 @@ const CompetitionDetailsScreen = () => {
 
   const competitionId = route.params?.competitionId || 'classical-dance-001';
 
-  const [competition, setCompetition] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>('');
+  // High-performance state from Context API
+  const {
+    competition,
+    lifecycle,
+    competitionState,
+    isRegistered,
+    submissionUploaded,
+    loading,
+    error,
+    loadCompetition,
+    register,
+    uploadVideo,
+    retry,
+  } = useCompetition();
 
-  // Step 12 Registration States
-  const [isRegistered, setIsRegistered] = useState<boolean>(false);
+  // Local Modal Form States
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [registering, setRegistering] = useState<boolean>(false);
   const [registerError, setRegisterError] = useState<string>('');
 
-  // Step 13 Submission States
-  const [submissionUploaded, setSubmissionUploaded] = useState<boolean>(false);
-  const [uploadingSubmission, setUploadingSubmission] =
-    useState<boolean>(false);
+  // Upload progress state
+  const [uploadingSubmission, setUploadingSubmission] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string>('');
 
-  // Step 14 Lifecycle computation
-  const lifecycle = competition?.lifecycle;
-  const competitionState = lifecycle?.state || 'REGISTRATION_OPEN';
-
-  // Step 16.2: Reusable load/retry handler
-  const loadCompetitionAgain = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const result = await getCompetition(competitionId);
-      if (result?.data) {
-        setCompetition(result.data);
-      } else {
-        setError('Unable to load competition');
-      }
-    } catch (err: any) {
-      console.log('Load competition error:', err?.message);
-      setError('Unable to load competition');
-    } finally {
-      setLoading(false);
-    }
-  }, [competitionId]);
-
+  // Fetch / refresh on mount
   useEffect(() => {
-    loadCompetitionAgain();
-  }, [loadCompetitionAgain]);
+    loadCompetition(competitionId);
+  }, [competitionId, loadCompetition]);
 
-  // Step 12.8 + Step 13.10: Saved User, Persistent Participation & Submission Check
-  useEffect(() => {
-    let isMounted = true;
-
-    const checkSavedUser = async () => {
-      try {
-        const savedEmail = await AsyncStorage.getItem('feedants_user_email');
-        if (!savedEmail) {
-          return;
-        }
-
-        if (isMounted) {
-          setEmail(savedEmail);
-        }
-
-        const result = await getParticipation(competitionId, savedEmail);
-        if (isMounted) {
-          setIsRegistered(result.registered === true);
-          setSubmissionUploaded(
-            result.participation?.submissionStatus === 'uploaded',
-          );
-        }
-      } catch (err) {
-        console.error('Saved user check failed:', err);
-      }
-    };
-
-    checkSavedUser();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [competitionId]);
-
-  // Step 12.9: Register Handler
+  // Handle User Registration
   const handleRegister = async () => {
     if (!name.trim() || !email.trim()) {
       setRegisterError('Name and email are required');
@@ -132,42 +77,12 @@ const CompetitionDetailsScreen = () => {
       setRegistering(true);
       setRegisterError('');
 
-      const result = await registerCompetition(
-        competitionId,
-        name.trim(),
-        email.trim(),
-      );
+      const result = await register(name.trim(), email.trim());
 
       if (result.success) {
-        await AsyncStorage.setItem(
-          'feedants_user_email',
-          email.trim().toLowerCase(),
-        );
-
-        setIsRegistered(true);
         setShowRegisterModal(false);
-
-        // Real-time update booked spot count & remaining spots
-        setCompetition((prev: any) => {
-          if (!prev) return prev;
-          const newRegistered = (prev.registeredCount || 0) + 1;
-          const remaining = Math.max(
-            (prev.maxParticipants || 20) - newRegistered,
-            0,
-          );
-          return {
-            ...prev,
-            registeredCount: newRegistered,
-            lifecycle: {
-              ...prev.lifecycle,
-              remainingSpots: remaining,
-              state:
-                remaining === 0
-                  ? 'REGISTRATION_FULL'
-                  : prev.lifecycle?.state,
-            },
-          };
-        });
+      } else {
+        setRegisterError(result.message || 'Registration failed');
       }
     } catch (err: any) {
       setRegisterError(err.message || 'Registration failed');
@@ -176,7 +91,7 @@ const CompetitionDetailsScreen = () => {
     }
   };
 
-  // Step 13.11: Video Submission Upload Handler
+  // Video Submission Upload Handler
   const handleUploadSubmission = async () => {
     try {
       setUploadingSubmission(true);
@@ -194,21 +109,15 @@ const CompetitionDetailsScreen = () => {
         return;
       }
 
-      const savedEmail =
-        (await AsyncStorage.getItem('feedants_user_email')) || email;
-
-      if (!savedEmail) {
-        setUploadError('Please register first.');
-        return;
-      }
-
-      await uploadSubmission(competitionId, savedEmail, {
+      const result = await uploadVideo({
         uri: file.uri || (file as any).fileCopyUri,
         name: file.name || 'competition-submission.mp4',
         type: file.type || 'video/mp4',
       });
 
-      setSubmissionUploaded(true);
+      if (!result.success) {
+        setUploadError(result.message || 'Upload failed');
+      }
     } catch (err: any) {
       if (
         err?.message?.includes('cancelled') ||
@@ -227,7 +136,6 @@ const CompetitionDetailsScreen = () => {
     navigation.goBack();
   }, [navigation]);
 
-  // Step 14.6: Action Button Handler respecting Competition Lifecycle
   const handleButtonPress = useCallback(() => {
     if (!isRegistered) {
       if (competitionState === 'REGISTRATION_OPEN') {
@@ -240,10 +148,10 @@ const CompetitionDetailsScreen = () => {
     if (competitionState === 'SUBMISSION_OPEN' && !submissionUploaded) {
       handleUploadSubmission();
     }
-  }, [isRegistered, submissionUploaded, competitionState, email, competitionId]);
+  }, [isRegistered, submissionUploaded, competitionState]);
 
-  // Step 16.1: Dedicated Loading UI
-  if (loading) {
+  // Loading state (only shown if no cached data is available yet)
+  if (loading && !competition) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
@@ -258,8 +166,8 @@ const CompetitionDetailsScreen = () => {
     );
   }
 
-  // Step 16.2: Dedicated Error Screen + Retry Action
-  if (error || !competition) {
+  // Error screen + Retry
+  if (error && !competition) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
@@ -267,12 +175,12 @@ const CompetitionDetailsScreen = () => {
           <Text style={styles.errorIcon}>!</Text>
           <Text style={styles.errorTitle}>Unable to load competition</Text>
           <Text style={styles.errorDescription}>
-            Please check your connection and try again.
+            {error || 'Please check your connection and try again.'}
           </Text>
           <TouchableOpacity
             style={styles.retryButton}
             activeOpacity={0.85}
-            onPress={loadCompetitionAgain}>
+            onPress={retry}>
             <Text style={styles.retryButtonText}>Try Again</Text>
           </TouchableOpacity>
         </View>
@@ -307,14 +215,16 @@ const CompetitionDetailsScreen = () => {
         />
 
         {/* Judge Card with dynamic photo & intro video */}
-        <JudgeCard
-          name={competition?.judge?.name}
-          profession={competition?.judge?.profession}
-          experience={competition?.judge?.experience}
-          imageUrl={competition?.judge?.image || competition?.judge?.imageUrl}
-        />
+        {competition?.judge && (
+          <JudgeCard
+            name={competition.judge.name}
+            profession={competition.judge.profession}
+            experience={competition.judge.experience}
+            imageUrl={competition.judge.image || competition.judge.imageUrl}
+          />
+        )}
 
-        {/* Step 14.9: Live Countdown Timer driven by MongoDB registrationEnd */}
+        {/* Live Countdown Timer driven by MongoDB registrationEnd */}
         <CountdownTimer targetDate={competition?.registrationEnd} />
 
         {/* 2x2 Important Dates Grid from MongoDB */}
@@ -350,7 +260,7 @@ const CompetitionDetailsScreen = () => {
         {/* Ad Here Box */}
         <AdvertisementCard />
 
-        {/* Step 16.4: Registration confirmation banner */}
+        {/* Registration confirmation banner */}
         {isRegistered && !submissionUploaded && (
           <View style={styles.registeredBanner}>
             <Text style={styles.registeredCheck}>✓</Text>
@@ -363,7 +273,7 @@ const CompetitionDetailsScreen = () => {
           </View>
         )}
 
-        {/* Step 16.5: Submission success banner */}
+        {/* Submission success banner */}
         {submissionUploaded && (
           <View style={styles.submissionSuccess}>
             <Text style={styles.successIcon}>✓</Text>
@@ -376,7 +286,7 @@ const CompetitionDetailsScreen = () => {
           </View>
         )}
 
-        {/* Step 14.6: Dynamic Action Button matching lifecycle state */}
+        {/* Dynamic Action Button matching lifecycle state */}
         <UploadSubmissionButton
           isRegistered={isRegistered}
           submissionUploaded={submissionUploaded}
@@ -389,7 +299,7 @@ const CompetitionDetailsScreen = () => {
         />
       </ScrollView>
 
-      {/* Step 12.11: Registration Modal */}
+      {/* Registration Modal */}
       <Modal
         visible={showRegisterModal}
         transparent
@@ -463,12 +373,12 @@ const styles = StyleSheet.create({
     paddingBottom: 25,
   },
 
-  // Step 16.1 Loading Styles
+  // Loading Styles
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFA',
   },
   loadingCircle: {
     width: 58,
@@ -495,13 +405,13 @@ const styles = StyleSheet.create({
     color: '#7A858A',
   },
 
-  // Step 16.2 Error Styles
+  // Error Styles
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 25,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFA',
   },
   errorIcon: {
     width: 52,
@@ -541,7 +451,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
-  // Step 16.4 & 16.5 Banners
+  // Banners
   registeredBanner: {
     marginTop: 18,
     padding: 13,

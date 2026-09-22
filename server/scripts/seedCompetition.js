@@ -18,6 +18,7 @@ const seedCompetition = async () => {
     await Competition.deleteMany({});
 
     const competition = await Competition.create({
+      competitionId: 'classical-dance-001',
       title: 'Feedants Classical Dance',
 
       category: 'Dance',

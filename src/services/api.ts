@@ -1,18 +1,70 @@
 import {Platform} from 'react-native';
 
-// Android Emulator connects to localhost via 10.0.2.2; iOS Simulator or physical device uses localhost/IP
-export const API_BASE_URL =
-  Platform.OS === 'android'
-    ? 'http://10.0.2.2:5000/api'
-    : 'http://localhost:5000/api';
+// Candidate endpoints for Physical USB device (localhost/127.0.0.1 via adb reverse) and Android Emulator (10.0.2.2)
+const CANDIDATE_URLS = [
+  'http://localhost:5000/api',
+  'http://127.0.0.1:5000/api',
+  'http://10.0.2.2:5000/api',
+];
+
+let activeBaseUrl = 'http://localhost:5000/api';
+
+export const getActiveBaseUrl = () => activeBaseUrl;
+
+const fetchWithTimeout = async (
+  path: string,
+  options: RequestInit = {},
+  timeoutMs = 4000,
+): Promise<Response> => {
+  // First attempt with active base URL
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`${activeBaseUrl}${path}`, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    return res;
+  } catch (primaryErr) {
+    clearTimeout(timer);
+
+    // If primary failed (e.g. 10.0.2.2 on physical device), try fallback
+    for (const candidate of CANDIDATE_URLS) {
+      if (candidate !== activeBaseUrl) {
+        const altController = new AbortController();
+        const altTimer = setTimeout(() => altController.abort(), timeoutMs);
+
+        try {
+          const altRes = await fetch(`${candidate}${path}`, {
+            ...options,
+            signal: altController.signal,
+          });
+          clearTimeout(altTimer);
+          if (altRes) {
+            activeBaseUrl = candidate; // Successfully discovered working route
+            return altRes;
+          }
+        } catch {
+          clearTimeout(altTimer);
+        }
+      }
+    }
+
+    throw primaryErr;
+  }
+};
 
 export const getCompetition = async (competitionId: string) => {
-  const response = await fetch(
-    `${API_BASE_URL}/competitions/${competitionId}`,
+  const response = await fetchWithTimeout(
+    `/competitions/${competitionId}`,
+    {method: 'GET'},
+    4000,
   );
 
   if (!response.ok) {
-    throw new Error('Failed to fetch competition');
+    throw new Error(`Failed to fetch competition: status ${response.status}`);
   }
 
   return response.json();
@@ -28,8 +80,8 @@ export const registerCompetition = async (
   const email =
     typeof nameOrData === 'object' ? nameOrData.email : emailParam;
 
-  const response = await fetch(
-    `${API_BASE_URL}/competitions/${competitionId}/register`,
+  const response = await fetchWithTimeout(
+    `/competitions/${competitionId}/register`,
     {
       method: 'POST',
       headers: {
@@ -40,6 +92,7 @@ export const registerCompetition = async (
         email,
       }),
     },
+    6000,
   );
 
   const result = await response.json();
@@ -55,10 +108,12 @@ export const getParticipation = async (
   competitionId: string,
   email: string,
 ) => {
-  const response = await fetch(
-    `${API_BASE_URL}/competitions/${competitionId}/participation?email=${encodeURIComponent(
+  const response = await fetchWithTimeout(
+    `/competitions/${competitionId}/participation?email=${encodeURIComponent(
       email,
     )}`,
+    {method: 'GET'},
+    4000,
   );
 
   if (!response.ok) {
@@ -87,13 +142,13 @@ export const uploadSubmission = async (
     type: file.type,
   } as any);
 
-  // Note: Do not set Content-Type header manually for multipart/form-data so React Native generates proper boundary
-  const response = await fetch(
-    `${API_BASE_URL}/competitions/${competitionId}/submission`,
+  const response = await fetchWithTimeout(
+    `/competitions/${competitionId}/submission`,
     {
       method: 'POST',
       body: formData,
     },
+    15000,
   );
 
   const result = await response.json();

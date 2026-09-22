@@ -2,6 +2,12 @@ import mongoose from 'mongoose';
 
 const competitionSchema = new mongoose.Schema(
   {
+    competitionId: {
+      type: String,
+      default: 'classical-dance-001',
+      index: true,
+    },
+
     title: {
       type: String,
       required: true,
