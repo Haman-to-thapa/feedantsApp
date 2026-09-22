@@ -1,6 +1,8 @@
+import mongoose from 'mongoose';
 import Competition from '../models/Competition.js';
 import User from '../models/User.js';
 import Participation from '../models/Participation.js';
+import {getCompetitionState} from '../services/competitionState.js';
 
 export const getCompetitionById = async (req, res) => {
   try {
@@ -25,9 +27,14 @@ export const getCompetitionById = async (req, res) => {
       });
     }
 
+    const lifecycle = getCompetitionState(competition);
+
     return res.status(200).json({
       success: true,
-      data: competition,
+      data: {
+        ...competition,
+        lifecycle,
+      },
     });
   } catch (error) {
     console.error('Get competition error:', error);
@@ -93,19 +100,213 @@ export const getParticipation = async (req, res) => {
 };
 
 export const registerForCompetition = async (req, res) => {
+  let session = null;
+  try {
+    session = await mongoose.startSession();
+  } catch (sessErr) {
+    console.warn('MongoDB Session not available, proceeding standalone:', sessErr.message);
+  }
+
   try {
     const {competitionId} = req.params;
-    const {name, email} = req.body;
+    const {name, email: rawEmail} = req.body;
 
-    // 1. Validate input
-    if (!name || !email) {
-      return res.status(400).json({
+    const email = rawEmail.trim().toLowerCase();
+
+    if (session) {
+      session.startTransaction();
+    }
+
+    // 1. Find competition
+    let competition = null;
+    if (competitionId.match(/^[0-9a-fA-F]{24}$/)) {
+      competition = session
+        ? await Competition.findById(competitionId).session(session)
+        : await Competition.findById(competitionId);
+    }
+    if (!competition) {
+      competition = session
+        ? await Competition.findOne({competitionId}).session(session)
+        : await Competition.findOne({competitionId});
+    }
+
+    if (!competition) {
+      if (session) await session.abortTransaction();
+      return res.status(404).json({
         success: false,
-        message: 'Name and email are required',
+        message: 'Competition not found',
       });
     }
 
-    // 2. Find competition
+    // 2. Lifecycle check (Unified business logic with frontend)
+    const lifecycle = getCompetitionState(competition);
+
+    if (lifecycle.state !== 'REGISTRATION_OPEN') {
+      if (session) await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message:
+          lifecycle.state === 'REGISTRATION_FULL'
+            ? 'Competition is full'
+            : 'Registration is not open',
+      });
+    }
+
+    // 3. Find existing user
+    let user = session
+      ? await User.findOne({email}).session(session)
+      : await User.findOne({email});
+
+    // 4. Create user if needed
+    if (!user) {
+      if (session) {
+        const createdUsers = await User.create(
+          [
+            {
+              name: name.trim(),
+              email,
+            },
+          ],
+          {session},
+        );
+        user = createdUsers[0];
+      } else {
+        user = await User.create({
+          name: name.trim(),
+          email,
+        });
+      }
+    }
+
+    // 5. Prevent duplicate participation
+    const existing = session
+      ? await Participation.findOne({
+          userId: user._id,
+          competitionId: competition._id,
+        }).session(session)
+      : await Participation.findOne({
+          userId: user._id,
+          competitionId: competition._id,
+        });
+
+    if (existing) {
+      if (session) await session.abortTransaction();
+      return res.status(409).json({
+        success: false,
+        message: 'User already registered',
+      });
+    }
+
+    // 6. Atomic spot reservation
+    const updatedCompetition = await Competition.findOneAndUpdate(
+      {
+        _id: competition._id,
+        $expr: {
+          $lt: ['$registeredCount', '$maxParticipants'],
+        },
+      },
+      {
+        $inc: {
+          registeredCount: 1,
+        },
+      },
+      {
+        new: true,
+        session: session || undefined,
+      },
+    );
+
+    if (!updatedCompetition) {
+      if (session) await session.abortTransaction();
+      return res.status(409).json({
+        success: false,
+        message: 'Competition is full',
+      });
+    }
+
+    // 7. Create participation
+    let participation = null;
+    if (session) {
+      const createdParticipations = await Participation.create(
+        [
+          {
+            userId: user._id,
+            competitionId: competition._id,
+            paymentStatus: 'pending',
+            registrationStatus: 'registered',
+            submissionStatus: 'not_uploaded',
+          },
+        ],
+        {session},
+      );
+      participation = createdParticipations[0];
+      await session.commitTransaction();
+    } else {
+      participation = await Participation.create({
+        userId: user._id,
+        competitionId: competition._id,
+        paymentStatus: 'pending',
+        registrationStatus: 'registered',
+        submissionStatus: 'not_uploaded',
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: 'Registration successful',
+      participation,
+      competition: {
+        id: updatedCompetition._id,
+        registeredCount: updatedCompetition.registeredCount,
+        maxParticipants: updatedCompetition.maxParticipants,
+      },
+    });
+  } catch (error) {
+    if (session && session.inTransaction()) {
+      await session.abortTransaction();
+    }
+
+    console.error('Registration error:', error);
+
+    // Database duplicate key error (E11000)
+    if (error.code === 11000) {
+      return res.status(409).json({
+        success: false,
+        message: 'User already registered',
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: 'Registration could not be completed',
+    });
+  } finally {
+    if (session) {
+      await session.endSession();
+    }
+  }
+};
+
+export const uploadSubmission = async (req, res) => {
+  try {
+    const {competitionId} = req.params;
+    const {email} = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required',
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'Submission file is required',
+      });
+    }
+
+    // Find competition (by ObjectId, slug or first available)
     let competition = null;
     if (competitionId.match(/^[0-9a-fA-F]{24}$/)) {
       competition = await Competition.findById(competitionId);
@@ -124,112 +325,71 @@ export const registerForCompetition = async (req, res) => {
       });
     }
 
+    // Submission time check
     const now = new Date();
-
-    // 3. Registration window check
     if (
-      now < competition.registrationStart ||
-      now > competition.registrationEnd
+      competition.submissionStart &&
+      competition.submissionEnd &&
+      (now < competition.submissionStart || now > competition.submissionEnd)
     ) {
       return res.status(400).json({
         success: false,
-        message: 'Registration is closed',
+        message: 'Submission window is closed',
       });
     }
 
-    // 4. Find/create user
-    let user = await User.findOne({email: email.toLowerCase()});
+    // Find user
+    const user = await User.findOne({
+      email: email.toLowerCase(),
+    });
 
     if (!user) {
-      user = await User.create({
-        name,
-        email: email.toLowerCase(),
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
       });
     }
 
-    // 5. Already registered check
-    const existingParticipation = await Participation.findOne({
+    // Find participation
+    const participation = await Participation.findOne({
       userId: user._id,
       competitionId: competition._id,
     });
 
-    if (existingParticipation) {
-      return res.status(409).json({
+    if (!participation) {
+      return res.status(403).json({
         success: false,
-        message: 'User already registered',
-        participation: existingParticipation,
+        message: 'You must register before submitting',
       });
     }
 
-    // 6. Atomically reserve ONE spot
-    const updatedCompetition = await Competition.findOneAndUpdate(
-      {
-        _id: competition._id,
-        $expr: {
-          $lt: ['$registeredCount', '$maxParticipants'],
-        },
-      },
-      {
-        $inc: {
-          registeredCount: 1,
-        },
-      },
-      {
-        new: true,
-      },
-    );
-
-    // No spot available
-    if (!updatedCompetition) {
-      return res.status(409).json({
+    if (participation.registrationStatus !== 'registered') {
+      return res.status(403).json({
         success: false,
-        message: 'Competition is full',
+        message: 'Registration is not active',
       });
     }
 
-    // 7. Create participation
-    try {
-      const participation = await Participation.create({
-        userId: user._id,
-        competitionId: competition._id,
-        paymentStatus: 'pending',
-        registrationStatus: 'registered',
-        submissionStatus: 'not_uploaded',
-      });
+    const submissionUrl = `/uploads/${req.file.filename}`;
+    participation.submissionUrl = submissionUrl;
+    participation.submissionStatus = 'uploaded';
+    await participation.save();
 
-      return res.status(201).json({
-        success: true,
-        message: 'Registration successful',
-        participation,
-        competition: {
-          id: updatedCompetition._id,
-          registeredCount: updatedCompetition.registeredCount,
-          maxParticipants: updatedCompetition.maxParticipants,
-        },
-      });
-    } catch (error) {
-      // If participation creation fails, return the reserved spot.
-      await Competition.findByIdAndUpdate(competition._id, {
-        $inc: {
-          registeredCount: -1,
-        },
-      });
-
-      // Duplicate registration
-      if (error.code === 11000) {
-        return res.status(409).json({
-          success: false,
-          message: 'User already registered',
-        });
-      }
-
-      throw error;
-    }
+    return res.status(200).json({
+      success: true,
+      message: 'Submission uploaded successfully',
+      submission: {
+        url: submissionUrl,
+        fileName: req.file.originalname,
+        size: req.file.size,
+      },
+    });
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Upload submission error:', error);
     return res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: 'Submission upload failed',
     });
   }
 };
+

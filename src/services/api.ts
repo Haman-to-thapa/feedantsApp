@@ -67,3 +67,40 @@ export const getParticipation = async (
 
   return response.json();
 };
+
+export const uploadSubmission = async (
+  competitionId: string,
+  email: string,
+  file: {
+    uri: string;
+    name: string;
+    type: string;
+  },
+) => {
+  const formData = new FormData();
+
+  formData.append('email', email);
+
+  formData.append('submission', {
+    uri: file.uri,
+    name: file.name,
+    type: file.type,
+  } as any);
+
+  // Note: Do not set Content-Type header manually for multipart/form-data so React Native generates proper boundary
+  const response = await fetch(
+    `${API_BASE_URL}/competitions/${competitionId}/submission`,
+    {
+      method: 'POST',
+      body: formData,
+    },
+  );
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error(result.message || 'Submission upload failed');
+  }
+
+  return result;
+};

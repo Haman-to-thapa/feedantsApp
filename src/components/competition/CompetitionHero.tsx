@@ -9,6 +9,7 @@ interface CompetitionHeroProps {
   entryFee?: number;
   maxParticipants?: number;
   registeredCount?: number;
+  remainingSpots?: number;
   isRegistered?: boolean;
 }
 
@@ -20,9 +21,13 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
   entryFee = 99,
   maxParticipants = 20,
   registeredCount = 1,
+  remainingSpots,
   isRegistered = true,
 }) => {
-  const spotsLeft = Math.max(maxParticipants - registeredCount, 0);
+  const spotsLeft =
+    remainingSpots !== undefined
+      ? remainingSpots
+      : Math.max(maxParticipants - registeredCount, 0);
   const progressPercent = Math.min(
     Math.round((registeredCount / maxParticipants) * 100),
     100,
@@ -80,7 +85,9 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
         <View style={styles.spotsCol}>
           <View style={styles.spotsHeader}>
             <Text style={styles.spotsUserIcon}>👥</Text>
-            <Text style={styles.spotsTitle}>Only {spotsLeft} spots left</Text>
+            <Text style={styles.spotsTitle}>
+              {spotsLeft > 0 ? `Only ${spotsLeft} spots left` : 'No spots left'}
+            </Text>
           </View>
 
           <View style={styles.progressTrack}>

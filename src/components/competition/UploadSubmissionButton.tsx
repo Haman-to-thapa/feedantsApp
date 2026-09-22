@@ -3,37 +3,129 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
 interface UploadSubmissionButtonProps {
   isRegistered?: boolean;
+  submissionUploaded?: boolean;
+  uploadingSubmission?: boolean;
+  competitionState?: string;
   entryFee?: number;
+  submissionStart?: string | Date;
+  uploadError?: string;
   onPress: () => void;
 }
 
 const UploadSubmissionButton: React.FC<UploadSubmissionButtonProps> = ({
   isRegistered = false,
+  submissionUploaded = false,
+  uploadingSubmission = false,
+  competitionState = 'REGISTRATION_OPEN',
   entryFee = 99,
+  submissionStart,
+  uploadError = '',
   onPress,
 }) => {
+  const getActionTitle = () => {
+    if (uploadingSubmission) {
+      return 'Uploading...';
+    }
+
+    if (isRegistered) {
+      if (submissionUploaded) {
+        return 'Submission Uploaded';
+      }
+
+      if (competitionState === 'SUBMISSION_OPEN') {
+        return 'Upload Submission';
+      }
+
+      return 'Registered';
+    }
+
+    switch (competitionState) {
+      case 'UPCOMING':
+        return 'Registration Not Started';
+
+      case 'REGISTRATION_FULL':
+        return 'Registration Full';
+
+      case 'REGISTRATION_OPEN':
+        return 'Register Now';
+
+      case 'REGISTRATION_CLOSED':
+        return 'Registration Closed';
+
+      case 'SUBMISSION_OPEN':
+        return 'Registration Closed';
+
+      case 'SUBMISSION_CLOSED':
+        return 'Submission Closed';
+
+      case 'RESULT_PUBLISHED':
+        return 'View Result';
+
+      default:
+        return 'Register Now';
+    }
+  };
+
+  const isActionDisabled = () => {
+    if (uploadingSubmission) {
+      return true;
+    }
+
+    if (isRegistered) {
+      return (
+        submissionUploaded || competitionState !== 'SUBMISSION_OPEN'
+      );
+    }
+
+    return competitionState !== 'REGISTRATION_OPEN';
+  };
+
+  const formattedSubmissionStart = submissionStart
+    ? new Date(submissionStart).toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+      })
+    : '';
+
   return (
     <View style={styles.submissionSection}>
       <TouchableOpacity
-        style={styles.submissionButton}
+        style={[
+          styles.submissionButton,
+          isActionDisabled() && styles.disabledSubmissionButton,
+          submissionUploaded && styles.successSubmissionButton,
+        ]}
         activeOpacity={0.85}
+        disabled={isActionDisabled()}
         onPress={onPress}>
         <Text style={styles.uploadIcon}>
-          {isRegistered ? '↑' : '✓'}
+          {submissionUploaded ? '✓' : isRegistered ? '↑' : '＋'}
         </Text>
 
-        <View style={styles.centerTextContainer}>
-          <Text style={styles.submissionTitle}>
-            {isRegistered ? 'Upload Submission' : 'Register Now'}
-          </Text>
+        <View style={styles.actionTextContainer}>
+          <Text style={styles.submissionTitle}>{getActionTitle()}</Text>
 
           <Text style={styles.submissionStatus}>
-            {isRegistered ? 'Registered' : `Entry Fee ₹${entryFee}`}
+            {isRegistered
+              ? submissionUploaded
+                ? 'Submitted successfully'
+                : competitionState === 'SUBMISSION_OPEN'
+                ? 'Registered'
+                : formattedSubmissionStart
+                ? `Submission starts ${formattedSubmissionStart}`
+                : 'Registered'
+              : competitionState === 'REGISTRATION_OPEN'
+              ? `Entry Fee ₹${entryFee}`
+              : (competitionState || '').replace(/_/g, ' ')}
           </Text>
         </View>
 
-        <Text style={styles.arrow}>›</Text>
+        {competitionState !== 'REGISTRATION_FULL' && !submissionUploaded && (
+          <Text style={styles.arrow}>›</Text>
+        )}
       </TouchableOpacity>
+
+      {uploadError ? <Text style={styles.errorText}>{uploadError}</Text> : null}
     </View>
   );
 };
@@ -59,13 +151,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 6,
   },
+  disabledSubmissionButton: {
+    backgroundColor: '#C9D5D5',
+    elevation: 0,
+    shadowOpacity: 0,
+  },
+  successSubmissionButton: {
+    backgroundColor: '#0E7A6E',
+  },
   uploadIcon: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#BFE7E3',
-    width: 24,
+    color: '#FFFFFF',
+    width: 28,
   },
-  centerTextContainer: {
+  actionTextContainer: {
+    flex: 1,
     alignItems: 'center',
   },
   submissionTitle: {
@@ -77,13 +178,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
     fontSize: 11,
     fontWeight: '600',
-    color: '#BFE7E3',
+    color: '#E5F6F4',
+    textTransform: 'capitalize',
   },
   arrow: {
     fontSize: 22,
     fontWeight: '400',
-    color: '#BFE7E3',
+    color: '#FFFFFF',
     width: 24,
     textAlign: 'right',
+  },
+  errorText: {
+    marginTop: 8,
+    fontSize: 12,
+    color: '#C0392B',
+    textAlign: 'center',
+    fontWeight: '600',
   },
 });

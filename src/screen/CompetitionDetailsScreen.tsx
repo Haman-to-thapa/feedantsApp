@@ -27,10 +27,12 @@ import AdvertisementCard from '../components/competition/AdvertisementCard';
 import UploadSubmissionButton from '../components/competition/UploadSubmissionButton';
 
 import AsyncStorage from '../utils/storage';
+import {pick, types} from '../utils/documentPicker';
 import {
   getCompetition,
   registerCompetition,
   getParticipation,
+  uploadSubmission,
 } from '../services/api';
 
 const CompetitionDetailsScreen = () => {
@@ -50,6 +52,16 @@ const CompetitionDetailsScreen = () => {
   const [email, setEmail] = useState<string>('');
   const [registering, setRegistering] = useState<boolean>(false);
   const [registerError, setRegisterError] = useState<string>('');
+
+  // Step 13 Submission States
+  const [submissionUploaded, setSubmissionUploaded] = useState<boolean>(false);
+  const [uploadingSubmission, setUploadingSubmission] =
+    useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string>('');
+
+  // Step 14 Lifecycle computation
+  const lifecycle = competition?.lifecycle;
+  const competitionState = lifecycle?.state || 'REGISTRATION_OPEN';
 
   // 1. Fetch Competition Data from Backend / MongoDB
   useEffect(() => {
@@ -82,7 +94,7 @@ const CompetitionDetailsScreen = () => {
     };
   }, [competitionId]);
 
-  // 2. Step 12.8: Saved User & Persistent Participation Check
+  // 2. Step 12.8 + Step 13.10: Saved User, Persistent Participation & Submission Check
   useEffect(() => {
     let isMounted = true;
 
@@ -100,6 +112,9 @@ const CompetitionDetailsScreen = () => {
         const result = await getParticipation(competitionId, savedEmail);
         if (isMounted) {
           setIsRegistered(result.registered === true);
+          setSubmissionUploaded(
+            result.participation?.submissionStatus === 'uploaded',
+          );
         }
       } catch (err) {
         console.error('Saved user check failed:', err);
@@ -139,15 +154,27 @@ const CompetitionDetailsScreen = () => {
         setIsRegistered(true);
         setShowRegisterModal(false);
 
-        // Real-time update booked spot count
-        setCompetition((prev: any) =>
-          prev
-            ? {
-                ...prev,
-                registeredCount: (prev.registeredCount || 0) + 1,
-              }
-            : prev,
-        );
+        // Real-time update booked spot count & remaining spots
+        setCompetition((prev: any) => {
+          if (!prev) return prev;
+          const newRegistered = (prev.registeredCount || 0) + 1;
+          const remaining = Math.max(
+            (prev.maxParticipants || 20) - newRegistered,
+            0,
+          );
+          return {
+            ...prev,
+            registeredCount: newRegistered,
+            lifecycle: {
+              ...prev.lifecycle,
+              remainingSpots: remaining,
+              state:
+                remaining === 0
+                  ? 'REGISTRATION_FULL'
+                  : prev.lifecycle?.state,
+            },
+          };
+        });
       }
     } catch (err: any) {
       setRegisterError(err.message || 'Registration failed');
@@ -156,18 +183,71 @@ const CompetitionDetailsScreen = () => {
     }
   };
 
+  // Step 13.11: Video Submission Upload Handler
+  const handleUploadSubmission = async () => {
+    try {
+      setUploadingSubmission(true);
+      setUploadError('');
+
+      const res = await pick({
+        mode: 'import',
+        type: [types.video],
+        allowMultiSelection: false,
+      });
+
+      const file = Array.isArray(res) ? res[0] : res;
+
+      if (!file) {
+        return;
+      }
+
+      const savedEmail =
+        (await AsyncStorage.getItem('feedants_user_email')) || email;
+
+      if (!savedEmail) {
+        setUploadError('Please register first.');
+        return;
+      }
+
+      await uploadSubmission(competitionId, savedEmail, {
+        uri: file.uri || (file as any).fileCopyUri,
+        name: file.name || 'competition-submission.mp4',
+        type: file.type || 'video/mp4',
+      });
+
+      setSubmissionUploaded(true);
+    } catch (err: any) {
+      if (
+        err?.message?.includes('cancelled') ||
+        err?.code === 'DOCUMENT_PICKER_CANCELED'
+      ) {
+        return;
+      }
+      console.error('Submission upload error:', err);
+      setUploadError(err.message || 'Unable to upload submission');
+    } finally {
+      setUploadingSubmission(false);
+    }
+  };
+
   const handleBack = useCallback(() => {
     navigation.goBack();
   }, [navigation]);
 
+  // Step 14.6: Action Button Handler respecting Competition Lifecycle
   const handleButtonPress = useCallback(() => {
-    if (isRegistered) {
-      console.log('Upload submission pressed');
-    } else {
-      setRegisterError('');
-      setShowRegisterModal(true);
+    if (!isRegistered) {
+      if (competitionState === 'REGISTRATION_OPEN') {
+        setRegisterError('');
+        setShowRegisterModal(true);
+      }
+      return;
     }
-  }, [isRegistered]);
+
+    if (competitionState === 'SUBMISSION_OPEN' && !submissionUploaded) {
+      handleUploadSubmission();
+    }
+  }, [isRegistered, submissionUploaded, competitionState, email, competitionId]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -191,6 +271,7 @@ const CompetitionDetailsScreen = () => {
           entryFee={competition?.entryFee}
           maxParticipants={competition?.maxParticipants}
           registeredCount={competition?.registeredCount}
+          remainingSpots={lifecycle?.remainingSpots}
           isRegistered={isRegistered}
         />
 
@@ -202,8 +283,8 @@ const CompetitionDetailsScreen = () => {
           imageUrl={competition?.judge?.image || competition?.judge?.imageUrl}
         />
 
-        {/* Live Countdown Banner (Self-isolated timer, zero screen re-renders) */}
-        <CountdownTimer />
+        {/* Step 14.9: Live Countdown Timer driven by MongoDB registrationEnd */}
+        <CountdownTimer targetDate={competition?.registrationEnd} />
 
         {/* 2x2 Important Dates Grid */}
         <ImportantDates />
@@ -233,10 +314,15 @@ const CompetitionDetailsScreen = () => {
         {/* Ad Here Box */}
         <AdvertisementCard />
 
-        {/* Dynamic Bottom Button: Register Now / Upload Submission */}
+        {/* Step 14.6: Dynamic Action Button matching lifecycle state */}
         <UploadSubmissionButton
           isRegistered={isRegistered}
+          submissionUploaded={submissionUploaded}
+          uploadingSubmission={uploadingSubmission}
+          competitionState={competitionState}
           entryFee={competition?.entryFee || 99}
+          submissionStart={competition?.submissionStart}
+          uploadError={uploadError}
           onPress={handleButtonPress}
         />
       </ScrollView>
