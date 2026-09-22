@@ -1,97 +1,154 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# Feedants Competition Details
 
-# Getting Started
+A full-stack mobile competition details module built using **React Native CLI**, **Node.js**, **Express.js**, and **MongoDB Atlas**. This project implements a pixel-perfect Classical Dance Competition screen with real-time countdown, spot management, atomic registration, and video submission uploads.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+---
 
-## Step 1: Start Metro
+## 🚀 Tech Stack
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+### Mobile (Frontend)
+- **Framework**: React Native CLI (`0.87.1`)
+- **Language**: TypeScript
+- **Navigation**: React Navigation (`@react-navigation/native-stack`, `@react-navigation/bottom-tabs`)
+- **State & Storage**: React Hooks (`useState`, `useEffect`, `useCallback`, `React.memo`), `@react-native-async-storage/async-storage`
+- **File Picker**: `@react-native-documents/picker`
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+### Backend (API Server)
+- **Runtime**: Node.js (ES6 Modules)
+- **Framework**: Express.js
+- **Database**: MongoDB Atlas with Mongoose ORM
+- **File Uploads**: Multer
+- **Security & Performance**: Helmet, Express Rate Limiter, DNS optimization
 
-```sh
-# Using npm
+---
+
+## ✨ Features
+
+- **Pixel-Perfect UI**: 1:1 match with Figma/production reference (Header, Hero card, Judge info, 2x2 Dates grid, Previous Winners carousel, Underline Tabs, Rewards rank ladder, Policies, Referral card, User Reviews).
+- **Zero-Lag Architecture**: The 1-second countdown timer is isolated in a child component (`CountdownTimer.tsx`) and all UI sections are wrapped in `React.memo` to eliminate screen re-renders.
+- **Dynamic Competition Lifecycle**: Automatically calculates state (`UPCOMING`, `REGISTRATION_OPEN`, `REGISTRATION_FULL`, `REGISTRATION_CLOSED`, `SUBMISSION_OPEN`, `SUBMISSION_CLOSED`, `RESULT_PUBLISHED`).
+- **Atomic Spot Reservation**: Uses MongoDB atomic operators (`$expr: { $lt: ['$registeredCount', '$maxParticipants'] }` and `$inc: { registeredCount: 1 }`) within ACID transactions to prevent overselling spots during concurrent registrations.
+- **Duplicate Registration Guard**: Database-level unique compound index on `{ userId: 1, competitionId: 1 }` in Participation model.
+- **Persistent State**: User registration and submission states persist across app reloads via AsyncStorage and backend verification.
+- **Multipart Video Upload**: Video picker integration with 100MB file limit and MIME filtering.
+- **Brand Loading & Error States**: Dedicated loading screen with branded "F" badge and error screen with interactive retry button.
+
+---
+
+## 📁 Project Structure
+
+```
+feedantsApp/
+├── FeedantsApp/                     # React Native Mobile App
+│   ├── android/                     # Native Android project
+│   ├── ios/                         # Native iOS project
+│   ├── src/
+│   │   ├── components/competition/  # Modular, memoized UI components
+│   │   │   ├── CompetitionHeader.tsx
+│   │   │   ├── CompetitionHero.tsx
+│   │   │   ├── JudgeCard.tsx
+│   │   │   ├── CountdownTimer.tsx
+│   │   │   ├── ImportantDates.tsx
+│   │   │   ├── PreviousWinners.tsx
+│   │   │   ├── CompetitionInfoTabs.tsx
+│   │   │   ├── RewardsSection.tsx
+│   │   │   ├── CompetitionPolicies.tsx
+│   │   │   ├── ReferAndEarnCard.tsx
+│   │   │   ├── UserReviews.tsx
+│   │   │   ├── AdvertisementCard.tsx
+│   │   │   └── UploadSubmissionButton.tsx
+│   │   ├── navigation/              # Stack and Tab Navigators
+│   │   ├── screens/                 # Main CompetitionDetailsScreen
+│   │   ├── services/                # api.ts (Fetch service)
+│   │   └── utils/                   # storage.ts & documentPicker.ts adapters
+│   ├── server/                      # Express.js Backend
+│   │   ├── config/                  # db.js (Mongoose connection)
+│   │   ├── controllers/             # competitionController.js
+│   │   ├── middleware/              # errorHandler, upload, validateObjectId, validateRegistration
+│   │   ├── models/                  # Competition.js, User.js, Participation.js
+│   │   ├── routes/                  # competitionRoutes.js
+│   │   ├── scripts/                 # seedCompetition.js (Demo seeding)
+│   │   ├── services/                # competitionState.js (Lifecycle engine)
+│   │   ├── uploads/                 # Uploaded submission video files
+│   │   ├── .env                     # Local environment variables
+│   │   ├── .env.example             # Template environment variables
+│   │   ├── server.js                # Server entry point
+│   │   └── package.json
+│   ├── App.tsx
+│   └── package.json
+└── README.md
+```
+
+---
+
+## 🛠️ Setup & Installation
+
+### 1. Backend Setup
+
+```bash
+cd server
+npm install
+```
+
+Create a `.env` file in the `server` directory (refer to `.env.example`):
+```env
+PORT=5000
+MONGODB_URI=your_mongodb_connection_string
+```
+
+Seed initial competition data (for development/testing):
+```bash
+node scripts/seedCompetition.js
+```
+
+Start the backend server:
+```bash
+node server.js
+```
+
+---
+
+### 2. Mobile App Setup
+
+In a separate terminal:
+```bash
+cd ..
+npm install
+```
+
+Start Metro bundler:
+```bash
 npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-```sh
-# Using npm
+In another terminal, run on Android:
+```bash
 npm run android
-
-# OR using Yarn
-yarn android
 ```
 
-### iOS
+> **Note on Emulator Network**:
+> When using the Android Emulator, the app connects to the local backend using `http://10.0.2.2:5000/api`. On physical devices, replace `10.0.2.2` with your machine's local IP address in `src/services/api.ts`.
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+---
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+## 📡 API Reference
 
-```sh
-bundle install
-```
+| Method | Endpoint | Description | Sample Response |
+| :--- | :--- | :--- | :--- |
+| `GET` | `/api/competitions/:id` | Fetch competition details + dynamic lifecycle | `{ success: true, data: { ...comp, lifecycle: { ... } } }` |
+| `GET` | `/api/competitions/:id/participation?email=...` | Check if user is registered/submitted | `{ success: true, registered: true, participation: { ... } }` |
+| `POST` | `/api/competitions/:id/register` | Register user with atomic spot reservation | `{ success: true, message: "Registration successful" }` |
+| `POST` | `/api/competitions/:id/submission` | Upload video performance (multipart/form-data) | `{ success: true, submission: { url: "/uploads/..." } }` |
 
-Then, and every time you update your native dependencies, run:
+---
 
-```sh
-bundle exec pod install
-```
+## 🧪 Testing Checklist
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
-npm run ios
-
-# OR using Yarn
-yarn ios
-```
-
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+- [x] **GET Competition**: Fetches title, prize pool (₹1,500), entry fee (₹99), spots, judge, dates, and rewards.
+- [x] **Lifecycle Calculations**: Real-time status transitions (`UPCOMING` $\rightarrow$ `REGISTRATION_OPEN` $\rightarrow$ `REGISTRATION_FULL` $\rightarrow$ `SUBMISSION_OPEN`).
+- [x] **Registration Flow**: Slide-up modal validates full name and email address.
+- [x] **Concurrency & Atomicity**: Spot count atomically incremented inside a MongoDB transaction; returns 409 when full.
+- [x] **Duplicate Protection**: Unique index prevents duplicate registrations for the same user.
+- [x] **Video Submission**: Document picker selects MP4/video and uploads via Multer.
+- [x] **Persistent State**: State restored automatically on app relaunch.
+- [x] **Network Resilience**: Loading spinner and error retry screen with "Try Again" functionality.

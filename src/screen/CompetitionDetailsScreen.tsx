@@ -63,38 +63,31 @@ const CompetitionDetailsScreen = () => {
   const lifecycle = competition?.lifecycle;
   const competitionState = lifecycle?.state || 'REGISTRATION_OPEN';
 
-  // 1. Fetch Competition Data from Backend / MongoDB
-  useEffect(() => {
-    let isMounted = true;
+  // Step 16.2: Reusable load/retry handler
+  const loadCompetitionAgain = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
 
-    const loadCompetition = async () => {
-      try {
-        setLoading(true);
-        const result = await getCompetition(competitionId);
-        if (isMounted && result?.data) {
-          setCompetition(result.data);
-          setError('');
-        }
-      } catch (err: any) {
-        console.log('Backend connection note:', err?.message);
-        if (isMounted) {
-          setError('Backend offline or loading');
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+      const result = await getCompetition(competitionId);
+      if (result?.data) {
+        setCompetition(result.data);
+      } else {
+        setError('Unable to load competition');
       }
-    };
-
-    loadCompetition();
-
-    return () => {
-      isMounted = false;
-    };
+    } catch (err: any) {
+      console.log('Load competition error:', err?.message);
+      setError('Unable to load competition');
+    } finally {
+      setLoading(false);
+    }
   }, [competitionId]);
 
-  // 2. Step 12.8 + Step 13.10: Saved User, Persistent Participation & Submission Check
+  useEffect(() => {
+    loadCompetitionAgain();
+  }, [loadCompetitionAgain]);
+
+  // Step 12.8 + Step 13.10: Saved User, Persistent Participation & Submission Check
   useEffect(() => {
     let isMounted = true;
 
@@ -249,6 +242,44 @@ const CompetitionDetailsScreen = () => {
     }
   }, [isRegistered, submissionUploaded, competitionState, email, competitionId]);
 
+  // Step 16.1: Dedicated Loading UI
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingCircle}>
+            <Text style={styles.loadingIcon}>F</Text>
+          </View>
+          <Text style={styles.loadingTitle}>Loading competition</Text>
+          <Text style={styles.loadingText}>Please wait...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Step 16.2: Dedicated Error Screen + Retry Action
+  if (error || !competition) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="dark-content" {...({backgroundColor: '#FFFFFF'} as any)} />
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorIcon}>!</Text>
+          <Text style={styles.errorTitle}>Unable to load competition</Text>
+          <Text style={styles.errorDescription}>
+            Please check your connection and try again.
+          </Text>
+          <TouchableOpacity
+            style={styles.retryButton}
+            activeOpacity={0.85}
+            onPress={loadCompetitionAgain}>
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" {...({backgroundColor: '#F8FAFA'} as any)} />
@@ -313,6 +344,32 @@ const CompetitionDetailsScreen = () => {
 
         {/* Ad Here Box */}
         <AdvertisementCard />
+
+        {/* Step 16.4: Registration confirmation banner */}
+        {isRegistered && !submissionUploaded && (
+          <View style={styles.registeredBanner}>
+            <Text style={styles.registeredCheck}>✓</Text>
+            <View style={styles.registeredContent}>
+              <Text style={styles.registeredTitle}>You are registered</Text>
+              <Text style={styles.registeredText}>
+                Your participation has been saved.
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Step 16.5: Submission success banner */}
+        {submissionUploaded && (
+          <View style={styles.submissionSuccess}>
+            <Text style={styles.successIcon}>✓</Text>
+            <View style={styles.registeredContent}>
+              <Text style={styles.successTitle}>Submission uploaded</Text>
+              <Text style={styles.successText}>
+                Your video has been submitted successfully.
+              </Text>
+            </View>
+          </View>
+        )}
 
         {/* Step 14.6: Dynamic Action Button matching lifecycle state */}
         <UploadSubmissionButton
@@ -400,6 +457,157 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 25,
   },
+
+  // Step 16.1 Loading Styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  loadingCircle: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#E7F5F4',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingIcon: {
+    fontSize: 25,
+    fontWeight: '900',
+    color: '#167C80',
+  },
+  loadingTitle: {
+    marginTop: 15,
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#182A34',
+  },
+  loadingText: {
+    marginTop: 5,
+    fontSize: 12,
+    color: '#7A858A',
+  },
+
+  // Step 16.2 Error Styles
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 25,
+    backgroundColor: '#FFFFFF',
+  },
+  errorIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#FDECEC',
+    color: '#C0392B',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 27,
+    fontWeight: '800',
+    lineHeight: 52,
+  },
+  errorTitle: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#182A34',
+  },
+  errorDescription: {
+    marginTop: 7,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    color: '#7A858A',
+  },
+  retryButton: {
+    marginTop: 18,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+    backgroundColor: '#167C80',
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
+  // Step 16.4 & 16.5 Banners
+  registeredBanner: {
+    marginTop: 18,
+    padding: 13,
+    borderRadius: 14,
+    backgroundColor: '#EDF8F3',
+    borderWidth: 1,
+    borderColor: '#D3EDE0',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  registeredCheck: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#D8F0E4',
+    color: '#168557',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 34,
+    marginRight: 10,
+  },
+  registeredContent: {
+    flex: 1,
+  },
+  registeredTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#24533F',
+  },
+  registeredText: {
+    marginTop: 3,
+    fontSize: 11,
+    color: '#70847A',
+  },
+  submissionSuccess: {
+    marginTop: 12,
+    padding: 13,
+    borderRadius: 14,
+    backgroundColor: '#EEF8FA',
+    borderWidth: 1,
+    borderColor: '#D5ECEF',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  successIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#DDF1F3',
+    color: '#167C80',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 17,
+    fontWeight: '800',
+    lineHeight: 34,
+    marginRight: 10,
+  },
+  successTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1A4B50',
+  },
+  successText: {
+    marginTop: 3,
+    fontSize: 11,
+    color: '#728185',
+  },
+
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     justifyContent: 'flex-end',
