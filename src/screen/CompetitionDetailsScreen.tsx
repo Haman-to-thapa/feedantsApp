@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   SafeAreaView,
   ScrollView,
@@ -7,11 +7,49 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
+  Image,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
 const CompetitionDetailsScreen = () => {
   const navigation = useNavigation<any>();
+
+  // Temporary demo deadline.
+  // Later this will come from the backend.
+  const registrationEnd = useRef(
+    Date.now() +
+      1 * 24 * 60 * 60 * 1000 +
+      6 * 60 * 60 * 1000 +
+      28 * 60 * 1000 +
+      32 * 1000,
+  ).current;
+
+  const [timeLeft, setTimeLeft] = useState(registrationEnd - Date.now());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(registrationEnd - Date.now());
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [registrationEnd]);
+
+  const totalSeconds = Math.max(0, Math.floor(timeLeft / 1000));
+
+  const days = Math.floor(totalSeconds / (24 * 60 * 60));
+
+  const hours = Math.floor(
+    (totalSeconds % (24 * 60 * 60)) / (60 * 60),
+  );
+
+  const minutes = Math.floor(
+    (totalSeconds % (60 * 60)) / 60,
+  );
+
+  const seconds = totalSeconds % 60;
+
+  const formatTime = (value: number) =>
+    String(value).padStart(2, '0');
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -92,6 +130,158 @@ const CompetitionDetailsScreen = () => {
               5%
             </Text>
           </View>
+        </View>
+
+        {/* Judge */}
+        <View style={styles.judgeCard}>
+          <View style={styles.judgeImageWrapper}>
+            <View style={styles.judgeImagePlaceholder}>
+              <Text style={styles.judgeInitials}>MD</Text>
+            </View>
+          </View>
+
+          <View style={styles.judgeInfo}>
+            <Text style={styles.judgeLabel}>Judge</Text>
+
+            <Text style={styles.judgeName}>
+              Manju Dubey
+            </Text>
+
+            <Text style={styles.judgeProfession}>
+              Professional Kathak Dancer
+            </Text>
+
+            <Text style={styles.judgeExperience}>
+              12+ Years of Experience
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.videoButton}
+            activeOpacity={0.8}>
+            <Text style={styles.playIcon}>▶</Text>
+
+            <Text style={styles.videoText}>
+              Intro Video
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Countdown */}
+        <View style={styles.countdownCard}>
+          <Text style={styles.countdownIcon}>⌛</Text>
+
+          <Text style={styles.countdownLabel}>
+            Registration closes in
+          </Text>
+
+          <Text style={styles.countdownValue}>
+            {formatTime(days)}d : {formatTime(hours)}h :{' '}
+            {formatTime(minutes)}m : {formatTime(seconds)}s
+          </Text>
+
+          <Text style={styles.hurryText}>
+            ⏱ Hurry up!
+          </Text>
+        </View>
+
+        {/* Important Dates */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Important Dates</Text>
+
+          <View style={styles.datesCard}>
+            <View style={styles.dateRow}>
+              <View>
+                <Text style={styles.dateLabel}>Register Before</Text>
+                <Text style={styles.dateValue}>24 Sep 2026</Text>
+              </View>
+              <Text style={styles.dateIcon}>📅</Text>
+            </View>
+
+            <View style={styles.dateDivider} />
+
+            <View style={styles.dateRow}>
+              <View>
+                <Text style={styles.dateLabel}>Submission Starts</Text>
+                <Text style={styles.dateValue}>25 Sep 2026</Text>
+              </View>
+              <Text style={styles.dateIcon}>📤</Text>
+            </View>
+
+            <View style={styles.dateDivider} />
+
+            <View style={styles.dateRow}>
+              <View>
+                <Text style={styles.dateLabel}>Submission Ends</Text>
+                <Text style={styles.dateValue}>27 Sep 2026</Text>
+              </View>
+              <Text style={styles.dateIcon}>⏳</Text>
+            </View>
+
+            <View style={styles.dateDivider} />
+
+            <View style={styles.dateRow}>
+              <View>
+                <Text style={styles.dateLabel}>Result Date</Text>
+                <Text style={styles.dateValue}>30 Sep 2026</Text>
+              </View>
+              <Text style={styles.dateIcon}>🏆</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Previous Winners */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Previous Winners</Text>
+
+            <TouchableOpacity>
+              <Text style={styles.seeAll}>See all</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.winnersContainer}>
+
+            <View style={styles.winnerCard}>
+              <View style={styles.winnerImage}>
+                <Text style={styles.winnerInitial}>AS</Text>
+              </View>
+
+              <Text style={styles.winnerName}>Aarushi Sharma</Text>
+              <Text style={styles.winnerPosition}>1st Winner</Text>
+            </View>
+
+            <View style={styles.winnerCard}>
+              <View style={styles.winnerImage}>
+                <Text style={styles.winnerInitial}>RK</Text>
+              </View>
+
+              <Text style={styles.winnerName}>Riya Kapoor</Text>
+              <Text style={styles.winnerPosition}>2nd Winner</Text>
+            </View>
+
+            <View style={styles.winnerCard}>
+              <View style={styles.winnerImage}>
+                <Text style={styles.winnerInitial}>PN</Text>
+              </View>
+
+              <Text style={styles.winnerName}>Priya Nair</Text>
+              <Text style={styles.winnerPosition}>3rd Winner</Text>
+            </View>
+
+            <View style={styles.winnerCard}>
+              <View style={styles.winnerImage}>
+                <Text style={styles.winnerInitial}>MS</Text>
+              </View>
+
+              <Text style={styles.winnerName}>Meera Singh</Text>
+              <Text style={styles.winnerPosition}>4th Winner</Text>
+            </View>
+
+          </ScrollView>
         </View>
 
       </ScrollView>
@@ -273,5 +463,232 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     color: '#667177',
+  },
+
+  // Judge Card
+  judgeCard: {
+    marginTop: 14,
+    minHeight: 116,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E9EEEE',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  judgeImageWrapper: {
+    marginRight: 12,
+  },
+
+  judgeImagePlaceholder: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#E7F4F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  judgeInitials: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#167C80',
+  },
+
+  judgeInfo: {
+    flex: 1,
+  },
+
+  judgeLabel: {
+    fontSize: 12,
+    color: '#7E8A91',
+    marginBottom: 2,
+  },
+
+  judgeName: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: '#162A45',
+  },
+
+  judgeProfession: {
+    marginTop: 5,
+    fontSize: 12,
+    color: '#68788C',
+  },
+
+  judgeExperience: {
+    marginTop: 4,
+    fontSize: 12,
+    color: '#68788C',
+  },
+
+  videoButton: {
+    width: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  playIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#E8F7F8',
+    color: '#13838A',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 20,
+    paddingLeft: 3,
+  },
+
+  videoText: {
+    marginTop: 7,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#607286',
+  },
+
+  // Countdown Card
+  countdownCard: {
+    marginTop: 12,
+    minHeight: 52,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#EAF7F7',
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    rowGap: 4,
+  },
+
+  countdownIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+
+  countdownLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#162A45',
+    marginRight: 10,
+  },
+
+  countdownValue: {
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#087C84',
+    minWidth: 150,
+  },
+
+  hurryText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#167C80',
+  },
+
+  // Sections
+  section: {
+    marginTop: 22,
+  },
+
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 11,
+  },
+
+  sectionTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#16232C',
+  },
+
+  seeAll: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#167C80',
+  },
+
+  datesCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E8EEEE',
+    paddingHorizontal: 15,
+  },
+
+  dateRow: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+
+  dateLabel: {
+    fontSize: 12,
+    color: '#7B878D',
+    marginBottom: 5,
+  },
+
+  dateValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1B2A33',
+  },
+
+  dateIcon: {
+    fontSize: 20,
+  },
+
+  dateDivider: {
+    height: 1,
+    backgroundColor: '#EDF1F1',
+  },
+
+  winnersContainer: {
+    paddingRight: 10,
+  },
+
+  winnerCard: {
+    width: 145,
+    marginRight: 12,
+    padding: 11,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E8EEEE',
+  },
+
+  winnerImage: {
+    width: 123,
+    height: 115,
+    borderRadius: 13,
+    backgroundColor: '#E7F4F3',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  winnerInitial: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#167C80',
+  },
+
+  winnerName: {
+    marginTop: 10,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1B2A33',
+  },
+
+  winnerPosition: {
+    marginTop: 4,
+    fontSize: 11,
+    color: '#75828A',
   },
 });

@@ -5,10 +5,24 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from 'react-native';
+
 import {useNavigation} from '@react-navigation/native';
 
 const CompetitionsScreen = () => {
   const navigation = useNavigation<any>();
+
+  const openCompetition = () => {
+    const parent = navigation.getParent?.();
+    if (parent) {
+      parent.navigate('CompetitionDetails', {
+        competitionId: 'classical-dance-001',
+      });
+    } else {
+      navigation.navigate('CompetitionDetails', {
+        competitionId: 'classical-dance-001',
+      });
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -17,11 +31,7 @@ const CompetitionsScreen = () => {
       <TouchableOpacity
         style={styles.button}
         activeOpacity={0.8}
-        onPress={() =>
-          navigation.navigate('CompetitionDetails', {
-            competitionId: 'classical-dance-001',
-          })
-        }>
+        onPress={openCompetition}>
         <Text style={styles.buttonText}>
           Open Classical Dance
         </Text>
@@ -37,7 +47,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
     backgroundColor: '#FFFFFF',
   },
 
@@ -51,13 +60,13 @@ const styles = StyleSheet.create({
   button: {
     backgroundColor: '#167C80',
     paddingHorizontal: 20,
-    paddingVertical: 13,
+    paddingVertical: 14,
     borderRadius: 10,
   },
 
   buttonText: {
     color: '#FFFFFF',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
   },
 });
