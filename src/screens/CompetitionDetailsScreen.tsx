@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useCallback} from 'react';
 import {SafeAreaView, ScrollView, StyleSheet, StatusBar} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
@@ -19,15 +19,22 @@ import UploadSubmissionButton from '../components/competition/UploadSubmissionBu
 const CompetitionDetailsScreen = () => {
   const navigation = useNavigation<any>();
 
+  const handleBack = useCallback(() => {
+    navigation.goBack();
+  }, [navigation]);
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" {...({backgroundColor: '#F8FAFA'} as any)} />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.contentContainer}>
+        contentContainerStyle={styles.contentContainer}
+        removeClippedSubviews={true}
+        scrollEventThrottle={16}
+        overScrollMode="never">
         {/* ← Go back | ENG हिंदी */}
-        <CompetitionHeader onBack={() => navigation.goBack()} />
+        <CompetitionHeader onBack={handleBack} />
 
         {/* Title, Registered badge, tags, Prize/Fee/Spots 3-col */}
         <CompetitionHero />
@@ -35,7 +42,7 @@ const CompetitionDetailsScreen = () => {
         {/* Judge Card with photo & intro video */}
         <JudgeCard />
 
-        {/* Live Countdown Banner */}
+        {/* Live Countdown Banner (Self-isolated timer, zero screen re-renders) */}
         <CountdownTimer />
 
         {/* 2x2 Important Dates Grid */}
@@ -69,7 +76,7 @@ const CompetitionDetailsScreen = () => {
   );
 };
 
-export default CompetitionDetailsScreen;
+export default React.memo(CompetitionDetailsScreen);
 
 const styles = StyleSheet.create({
   safeArea: {
