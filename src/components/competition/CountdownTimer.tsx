@@ -4,11 +4,18 @@ import {useLanguage} from '../../context/LanguageContext';
 
 interface CountdownTimerProps {
   targetDate?: string | Date | number;
-  initialDurationMs?: number;
+  label?: string;
+  closedLabel?: string;
+  hurryText?: string;
+  icon?: string;
 }
 
 const CountdownTimer: React.FC<CountdownTimerProps> = ({
   targetDate,
+  label,
+  closedLabel,
+  hurryText,
+  icon = '⌛',
 }) => {
   const {t} = useLanguage();
 
@@ -47,12 +54,16 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
   const mUnit = t('minsShort');
   const sUnit = t('secsShort');
 
+  const activeLabel = label || t('registrationClosesIn');
+  const finishedLabel = closedLabel || t('registrationEnded');
+  const activeHurry = hurryText || t('hurryUp');
+
   return (
     <View style={styles.banner}>
       <View style={styles.leftGroup}>
-        <Text style={styles.hourglassIcon}>⌛</Text>
+        <Text style={styles.hourglassIcon}>{icon}</Text>
         <Text style={styles.label}>
-          {isClosed ? t('registrationEnded') : t('registrationClosesIn')}
+          {isClosed ? finishedLabel : activeLabel}
         </Text>
       </View>
 
@@ -64,7 +75,7 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
 
       <View style={styles.rightGroup}>
         <Text style={[styles.hurryText, isClosed && styles.closedText]}>
-          {isClosed ? t('closed') : t('hurryUp')}
+          {isClosed ? t('closed') : activeHurry}
         </Text>
       </View>
     </View>

@@ -32,8 +32,14 @@ export const translations = {
     experience: 'Exp',
 
     // Countdown Timer
+    registrationStartsIn: 'Registration starts in',
     registrationClosesIn: 'Registration closes in',
     registrationEnded: 'Registration ended',
+    submissionClosesIn: 'Submission closes in',
+    submissionEnded: 'Submission ended',
+    submissionStartsIn: 'Submission starts in',
+    resultAnnounceIn: 'Results announce in',
+    competitionCompleted: 'Competition Ended',
     hurryUp: '⏱ Hurry up!',
     closed: 'Closed',
     daysShort: 'd',
@@ -216,8 +222,14 @@ export const translations = {
     experience: 'अनुभव',
 
     // Countdown Timer
-    registrationClosesIn: 'समाप्त होने में:',
+    registrationStartsIn: 'पंजीकरण शुरू होने में:',
+    registrationClosesIn: 'पंजीकरण समाप्त होने में:',
     registrationEnded: 'पंजीकरण समाप्त',
+    submissionClosesIn: 'सबमिशन समाप्त होने में:',
+    submissionEnded: 'सबमिशन समाप्त',
+    submissionStartsIn: 'सबमिशन शुरू होने में:',
+    resultAnnounceIn: 'परिणाम घोषित होने में:',
+    competitionCompleted: 'प्रतियोगिता समाप्त',
     hurryUp: '⏱ जल्दी करें!',
     closed: 'समाप्त',
     daysShort: 'd',

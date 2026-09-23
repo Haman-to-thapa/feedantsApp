@@ -241,6 +241,92 @@ const CompetitionDetailsScreen = () => {
     );
   }
 
+  // Dynamic timer configuration matching competition lifecycle
+  const getTimerConfig = () => {
+    if (!competition) {
+      return {
+        targetDate: undefined,
+        label: t('registrationClosesIn'),
+        closedLabel: t('registrationEnded'),
+        hurryText: t('hurryUp'),
+        icon: '⌛',
+      };
+    }
+
+    const now = new Date();
+    const regStart = new Date(competition.registrationStart);
+    const regEnd = new Date(competition.registrationEnd);
+    const subStart = new Date(competition.submissionStart);
+    const subEnd = new Date(competition.submissionEnd);
+    const resDate = new Date(competition.resultDate);
+
+    // If registration hasn't started yet
+    if (now < regStart) {
+      return {
+        targetDate: competition.registrationStart,
+        label: t('registrationStartsIn'),
+        closedLabel: t('registrationEnded'),
+        hurryText: '📅 Upcoming',
+        icon: '📅',
+      };
+    }
+
+    // Active Registration window
+    if (now <= regEnd) {
+      return {
+        targetDate: competition.registrationEnd,
+        label: t('registrationClosesIn'),
+        closedLabel: t('registrationEnded'),
+        hurryText: t('hurryUp'),
+        icon: '⌛',
+      };
+    }
+
+    // Gap between registration end and submission start
+    if (now < subStart) {
+      return {
+        targetDate: competition.submissionStart,
+        label: t('submissionStartsIn'),
+        closedLabel: t('submissionStarts') || 'Submission starting...',
+        hurryText: '🎬 Get Ready!',
+        icon: '⏳',
+      };
+    }
+
+    // Active Video Submission / Uploading window!
+    if (now <= subEnd) {
+      return {
+        targetDate: competition.submissionEnd,
+        label: t('submissionClosesIn'),
+        closedLabel: t('submissionEnded'),
+        hurryText: '🎥 Upload Now!',
+        icon: '🎥',
+      };
+    }
+
+    // Submission closed, awaiting results
+    if (now < resDate) {
+      return {
+        targetDate: competition.resultDate,
+        label: t('resultAnnounceIn'),
+        closedLabel: t('competitionCompleted'),
+        hurryText: '🏆 Stay Tuned!',
+        icon: '🏆',
+      };
+    }
+
+    // All ended / results published
+    return {
+      targetDate: undefined,
+      label: t('competitionCompleted'),
+      closedLabel: t('competitionCompleted'),
+      hurryText: '🎉 Finished',
+      icon: '🎉',
+    };
+  };
+
+  const timerConfig = getTimerConfig();
+
   return (
     <View style={[styles.safeArea, {paddingTop: dynamicTopInset}]}>
       <StatusBar
@@ -295,8 +381,14 @@ const CompetitionDetailsScreen = () => {
           />
         )}
 
-        {/* Live Countdown Timer driven by MongoDB registrationEnd */}
-        <CountdownTimer targetDate={competition?.registrationEnd} />
+        {/* Live Countdown Timer driven by MongoDB dates across all lifecycle phases */}
+        <CountdownTimer
+          targetDate={timerConfig.targetDate}
+          label={timerConfig.label}
+          closedLabel={timerConfig.closedLabel}
+          hurryText={timerConfig.hurryText}
+          icon={timerConfig.icon}
+        />
 
         {/* 2x2 Important Dates Grid from MongoDB */}
         <ImportantDates
