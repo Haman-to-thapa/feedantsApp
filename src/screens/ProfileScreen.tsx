@@ -62,17 +62,13 @@ const ProfileScreen: React.FC = () => {
   const handleSwitchState = async (
     target: 'REGISTRATION_OPEN' | 'SUBMISSION_OPEN' | 'REGISTRATION_FULL',
   ) => {
-    // If already in target state, do NOT hit backend to avoid disturbing existing timer/data
-    if (competitionState === target) {
+    // If already in target state (except REGISTRATION_OPEN which can re-sync true participant count)
+    if (competitionState === target && target !== 'REGISTRATION_OPEN') {
       Alert.alert(
         'Feedants',
-        target === 'REGISTRATION_OPEN'
-          ? (language === 'en'
-              ? 'Registration timer is already ON and counting down! It will not restart.'
-              : 'रजिस्ट्रेशन टाइमर पहले से चालू है और समय कम हो रहा है! यह रीस्टार्ट नहीं होगा।')
-          : (language === 'en'
-              ? `Competition is already in ${target} state.`
-              : `प्रतियोगिता पहले से इस स्थिति में है।`),
+        language === 'en'
+          ? `Competition is already in ${target} state.`
+          : 'प्रतियोगिता पहले से इस स्थिति में है।',
         [
           {
             text: 'OK',

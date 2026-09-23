@@ -520,7 +520,12 @@ export const updateCompetitionStateForTesting = async (req, res) => {
         competition.submissionEnd = new Date(now.getTime() + 96 * 3600 * 1000);
       }
 
-      // DO NOT reset registeredCount — actual registrations must be preserved
+      // Recalculate true registeredCount from actual registered participants in the database!
+      const actualCount = await Participation.countDocuments({
+        competitionId: competition._id,
+        registrationStatus: 'registered',
+      });
+      competition.registeredCount = actualCount;
       competition.maxParticipants = Math.max(competition.maxParticipants || 20, 20);
     }
 

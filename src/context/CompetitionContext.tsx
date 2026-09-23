@@ -229,24 +229,6 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
     [activeCompetitionId, userEmail],
   );
 
-  const logout = useCallback(async () => {
-    try {
-      await AsyncStorage.removeItem(USER_EMAIL_KEY);
-    } catch {
-      // Ignore
-    }
-    // Clear all user state immediately
-    setUserEmail('');
-    setIsRegistered(false);
-    setSubmissionUploaded(false);
-    // Reload competition data but skip email restore so old email never comes back
-    await loadCompetition(activeCompetitionId, true);
-  }, [loadCompetition, activeCompetitionId]);
-
-  const resetSubmissionStatus = useCallback(() => {
-    setSubmissionUploaded(false);
-  }, []);
-
   const switchCompetitionState = useCallback(
     async (
       targetState: 'REGISTRATION_OPEN' | 'SUBMISSION_OPEN' | 'REGISTRATION_FULL',
@@ -262,6 +244,7 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
             JSON.stringify(result.data),
           ).catch(() => {});
         }
+        return result?.data;
       } catch (err: any) {
         console.error('switchCompetitionState error:', err);
       } finally {
@@ -270,6 +253,36 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
     },
     [activeCompetitionId],
   );
+
+  const logout = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem(USER_EMAIL_KEY);
+    } catch {
+      // Ignore
+    }
+    // Clear all user state immediately
+    setUserEmail('');
+    setIsRegistered(false);
+    setSubmissionUploaded(false);
+
+    // If competition is in simulated REGISTRATION_FULL state (0 spots),
+    // automatically restore true database registrations on logout so new user can register!
+    if (competitionState === 'REGISTRATION_FULL') {
+      try {
+        await switchCompetitionState('REGISTRATION_OPEN');
+        return;
+      } catch (e) {
+        console.warn('Auto restore on logout error:', e);
+      }
+    }
+
+    // Reload competition data but skip email restore so old email never comes back
+    await loadCompetition(activeCompetitionId, true);
+  }, [loadCompetition, activeCompetitionId, competitionState, switchCompetitionState]);
+
+  const resetSubmissionStatus = useCallback(() => {
+    setSubmissionUploaded(false);
+  }, []);
 
   const retry = useCallback(() => {
     loadCompetition(activeCompetitionId);
