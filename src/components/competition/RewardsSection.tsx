@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface RewardRow {
   icon: string;
@@ -12,24 +13,38 @@ interface RewardsSectionProps {
 }
 
 const RewardsSection: React.FC<RewardsSectionProps> = ({rewards}) => {
+  const {t} = useLanguage();
   let list: RewardRow[] = [];
+
+  const winnerLabel = t('winnerSuffix');
+  const certificateLabel = t('certificate');
 
   if (rewards && typeof rewards === 'object') {
     if (Array.isArray(rewards) && rewards.length > 0) {
-      list = rewards.map((r, i) => ({
-        icon: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐',
-        position: r.position || `${i + 1}th Winner`,
-        amount: typeof r.amount === 'number' ? `₹ ${r.amount}` : r.amount,
-      }));
+      list = rewards.map((r, i) => {
+        let pos = r.position || `${i + 1}th ${winnerLabel}`;
+        if (pos.includes('Winner')) {
+          pos = pos.replace('Winner', winnerLabel);
+        }
+        let amt = typeof r.amount === 'number' ? `₹ ${r.amount}` : r.amount;
+        if (amt === 'Certificate') {
+          amt = certificateLabel;
+        }
+        return {
+          icon: i === 0 ? '🏆' : i === 1 ? '🥈' : i === 2 ? '🥉' : '⭐',
+          position: pos,
+          amount: amt,
+        };
+      });
     } else if (rewards.first !== undefined) {
       list = [
-        {icon: '🏆', position: '1st Winner', amount: `₹ ${rewards.first}`},
-        {icon: '🥈', position: '2nd Winner', amount: `₹ ${rewards.second}`},
-        {icon: '🥉', position: '3rd Winner', amount: `₹ ${rewards.third}`},
+        {icon: '🏆', position: `1st ${winnerLabel}`, amount: `₹ ${rewards.first}`},
+        {icon: '🥈', position: `2nd ${winnerLabel}`, amount: `₹ ${rewards.second}`},
+        {icon: '🥉', position: `3rd ${winnerLabel}`, amount: `₹ ${rewards.third}`},
         {
           icon: '⭐',
           position: '4th - 6th',
-          amount: String(rewards.fourthToSixth || 'Certificate'),
+          amount: String(rewards.fourthToSixth || certificateLabel),
         },
       ];
     }
@@ -42,8 +57,8 @@ const RewardsSection: React.FC<RewardsSectionProps> = ({rewards}) => {
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
-        <Text style={styles.title}>Rewards</Text>
-        <Text style={styles.subTitle}>(All Positions)</Text>
+        <Text style={styles.title}>{t('rewardsTitle')}</Text>
+        <Text style={styles.subTitle}>{t('allPositions')}</Text>
       </View>
 
       <View style={styles.card}>

@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity, Image} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface JudgeCardProps {
   name?: string;
@@ -16,6 +17,8 @@ const JudgeCard: React.FC<JudgeCardProps> = ({
   imageUrl = '',
   onPressVideo,
 }) => {
+  const {t, localize} = useLanguage();
+
   // If no judge data is provided, do not render an empty card
   if (!name && !profession && !imageUrl) {
     return null;
@@ -34,13 +37,13 @@ const JudgeCard: React.FC<JudgeCardProps> = ({
       )}
 
       <View style={styles.judgeInfo}>
-        <Text style={styles.judgeLabel}>Judge</Text>
-        {name ? <Text style={styles.judgeName}>{name}</Text> : null}
+        <Text style={styles.judgeLabel}>{t('judge')}</Text>
+        {name ? <Text style={styles.judgeName}>{localize(name)}</Text> : null}
         {profession ? (
-          <Text style={styles.judgeProfession}>{profession}</Text>
+          <Text style={styles.judgeProfession}>{localize(profession)}</Text>
         ) : null}
         {experience ? (
-          <Text style={styles.judgeExperience}>{experience}</Text>
+          <Text style={styles.judgeExperience}>{localize(experience)}</Text>
         ) : null}
       </View>
 
@@ -51,7 +54,7 @@ const JudgeCard: React.FC<JudgeCardProps> = ({
         <View style={styles.playCircle}>
           <Text style={styles.playIcon}>▶</Text>
         </View>
-        <Text style={styles.videoText}>Intro Video</Text>
+        <Text style={styles.videoText}>{t('introVideo')}</Text>
       </TouchableOpacity>
     </View>
   );

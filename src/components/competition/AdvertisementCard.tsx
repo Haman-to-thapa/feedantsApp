@@ -1,11 +1,14 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 const AdvertisementCard: React.FC = () => {
+  const {t} = useLanguage();
+
   return (
     <View style={styles.card}>
       <Text style={styles.icon}>📢</Text>
-      <Text style={styles.text}>Ad Here</Text>
+      <Text style={styles.text}>{t('adHere')}</Text>
     </View>
   );
 };

@@ -94,8 +94,11 @@ const ProfileTabIcon = ({focused}: {focused: boolean}) => {
   );
 };
 
+import {useLanguage} from '../context/LanguageContext';
+
 // Custom Tab Bar matching Figma design
 const CustomTabBar = ({state, descriptors, navigation}: any) => {
+  const {t} = useLanguage();
   const insets = useSafeAreaInsets();
   const bottomPadding = Math.max(insets.bottom, Platform.OS === 'ios' ? 12 : 6);
 
@@ -124,20 +127,20 @@ const CustomTabBar = ({state, descriptors, navigation}: any) => {
           );
         }
 
-        let label = 'Home';
+        let label = t('tabHome');
         let IconComponent = HomeTabIcon;
 
         if (route.name === 'Home') {
-          label = 'Home';
+          label = t('tabHome');
           IconComponent = HomeTabIcon;
         } else if (route.name === 'Explore') {
-          label = 'Explore';
+          label = t('tabExplore');
           IconComponent = ExploreTabIcon;
         } else if (route.name === 'Competitions') {
-          label = 'Competitions';
+          label = t('tabCompetitions');
           IconComponent = CompetitionsTabIcon;
         } else if (route.name === 'Profile') {
-          label = 'Profile';
+          label = t('tabProfile');
           IconComponent = ProfileTabIcon;
         }
 

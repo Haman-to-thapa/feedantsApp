@@ -1,12 +1,13 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CompetitionHeaderProps {
   onBack?: () => void;
 }
 
 const CompetitionHeader: React.FC<CompetitionHeaderProps> = ({onBack}) => {
-  const [selectedLang, setSelectedLang] = useState<'ENG' | 'HIN'>('ENG');
+  const {language, setLanguage, t} = useLanguage();
 
   return (
     <View style={styles.header}>
@@ -15,20 +16,20 @@ const CompetitionHeader: React.FC<CompetitionHeaderProps> = ({onBack}) => {
         activeOpacity={0.7}
         onPress={onBack}>
         <Text style={styles.backArrow}>←</Text>
-        <Text style={styles.backText}>Go back</Text>
+        <Text style={styles.backText}>{t('goBack')}</Text>
       </TouchableOpacity>
 
       <View style={styles.languageContainer}>
         <TouchableOpacity
           style={[
             styles.langPill,
-            selectedLang === 'ENG' && styles.activeLangPill,
+            language === 'en' && styles.activeLangPill,
           ]}
-          onPress={() => setSelectedLang('ENG')}>
+          onPress={() => setLanguage('en')}>
           <Text
             style={[
               styles.langText,
-              selectedLang === 'ENG' && styles.activeLangText,
+              language === 'en' && styles.activeLangText,
             ]}>
             ENG
           </Text>
@@ -37,13 +38,13 @@ const CompetitionHeader: React.FC<CompetitionHeaderProps> = ({onBack}) => {
         <TouchableOpacity
           style={[
             styles.langPill,
-            selectedLang === 'HIN' && styles.activeLangPill,
+            language === 'hi' && styles.activeLangPill,
           ]}
-          onPress={() => setSelectedLang('HIN')}>
+          onPress={() => setLanguage('hi')}>
           <Text
             style={[
               styles.langText,
-              selectedLang === 'HIN' && styles.activeLangText,
+              language === 'hi' && styles.activeLangText,
             ]}>
             हिंदी
           </Text>
@@ -53,7 +54,7 @@ const CompetitionHeader: React.FC<CompetitionHeaderProps> = ({onBack}) => {
   );
 };
 
-export default CompetitionHeader;
+export default React.memo(CompetitionHeader);
 
 const styles = StyleSheet.create({
   header: {

@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface UploadSubmissionButtonProps {
   isRegistered?: boolean;
@@ -22,47 +23,49 @@ const UploadSubmissionButton: React.FC<UploadSubmissionButtonProps> = ({
   uploadError = '',
   onPress,
 }) => {
+  const {t} = useLanguage();
+
   const getActionTitle = () => {
     if (uploadingSubmission) {
-      return 'Uploading...';
+      return t('uploading');
     }
 
     if (isRegistered) {
       if (submissionUploaded) {
-        return 'Submission Uploaded';
+        return t('submissionUploaded');
       }
 
       if (competitionState === 'SUBMISSION_OPEN') {
-        return 'Upload Submission';
+        return t('uploadSubmission');
       }
 
-      return 'Registered';
+      return t('registeredStatus');
     }
 
     switch (competitionState) {
       case 'UPCOMING':
-        return 'Registration Not Started';
+        return t('registrationNotStarted');
 
       case 'REGISTRATION_FULL':
-        return 'Registration Full';
+        return t('registrationFull');
 
       case 'REGISTRATION_OPEN':
-        return 'Register Now';
+        return t('registerNow');
 
       case 'REGISTRATION_CLOSED':
-        return 'Registration Closed';
+        return t('registrationClosed');
 
       case 'SUBMISSION_OPEN':
-        return 'Registration Closed';
+        return t('registrationClosed');
 
       case 'SUBMISSION_CLOSED':
-        return 'Submission Closed';
+        return t('submissionClosed');
 
       case 'RESULT_PUBLISHED':
-        return 'View Result';
+        return t('viewResult');
 
       default:
-        return 'Register Now';
+        return t('registerNow');
     }
   };
 
@@ -108,14 +111,14 @@ const UploadSubmissionButton: React.FC<UploadSubmissionButtonProps> = ({
           <Text style={styles.submissionStatus}>
             {isRegistered
               ? submissionUploaded
-                ? 'Submitted successfully'
+                ? t('submittedSuccessfully')
                 : competitionState === 'SUBMISSION_OPEN'
-                ? 'Registered'
+                ? t('registeredStatus')
                 : formattedSubmissionStart
-                ? `Submission starts ${formattedSubmissionStart}`
-                : 'Registered'
+                ? t('submissionStartsOn', {date: formattedSubmissionStart})
+                : t('registeredStatus')
               : competitionState === 'REGISTRATION_OPEN'
-              ? `Entry Fee ₹${entryFee}`
+              ? t('entryFeeBadge', {fee: entryFee})
               : (competitionState || '').replace(/_/g, ' ')}
           </Text>
         </View>

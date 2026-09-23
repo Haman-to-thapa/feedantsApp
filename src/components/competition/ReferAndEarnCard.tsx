@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 const ReferAndEarnCard: React.FC = () => {
+  const {t} = useLanguage();
   const [copied, setCopied] = useState(false);
   const referralLink = 'https://feedants.com/r/referral123';
 
@@ -14,7 +16,7 @@ const ReferAndEarnCard: React.FC = () => {
     <View style={styles.card}>
       <View style={styles.topRow}>
         <Text style={styles.megaphoneIcon}>📢</Text>
-        <Text style={styles.title}>Refer & Earn more discount</Text>
+        <Text style={styles.title}>{t('referTitle')}</Text>
       </View>
 
       <View style={styles.actionRow}>
@@ -28,19 +30,19 @@ const ReferAndEarnCard: React.FC = () => {
             onPress={handleCopy}
             activeOpacity={0.7}>
             <Text style={styles.copyBtnText}>
-              {copied ? 'Copied' : 'Copy Link'}
+              {copied ? t('copied') : t('copyLink')}
             </Text>
           </TouchableOpacity>
         </View>
 
         {/* Refer Now Button */}
         <TouchableOpacity style={styles.referNowBtn} activeOpacity={0.8}>
-          <Text style={styles.referNowText}>Refer Now</Text>
+          <Text style={styles.referNowText}>{t('referNow')}</Text>
         </TouchableOpacity>
       </View>
 
       <Text style={styles.footerNote}>
-        You earn <Text style={styles.boldAmount}>₹10</Text> for every signup
+        {t('referFooter', {amount: '₹10'})}
       </Text>
     </View>
   );

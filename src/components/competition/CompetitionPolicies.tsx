@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CompetitionPoliciesProps {
   onPressPrizeVideo?: () => void;
@@ -10,15 +11,16 @@ const CompetitionPolicies: React.FC<CompetitionPoliciesProps> = ({
   onPressPrizeVideo,
   onPressRefund,
 }) => {
+  const {t} = useLanguage();
+
   return (
     <View style={styles.container}>
       {/* Disclaimer Pill Banner */}
       <View style={styles.disclaimerBanner}>
         <Text style={styles.infoIcon}>ⓘ</Text>
         <Text style={styles.disclaimerText}>
-          <Text style={styles.disclaimerHighlight}>Disclaimer: </Text>
-          Only contributions from paid participants will be considered for
-          judging.
+          <Text style={styles.disclaimerHighlight}>{t('disclaimerLabel')}</Text>
+          {t('disclaimerText')}
         </Text>
       </View>
 
@@ -33,9 +35,9 @@ const CompetitionPolicies: React.FC<CompetitionPoliciesProps> = ({
             <Text style={styles.playIcon}>▶</Text>
           </View>
           <Text style={styles.cardTitle}>
-            How will you receive prize money?
+            {t('howReceivePrize')}
           </Text>
-          <Text style={styles.cardSub}>Watch video to know more</Text>
+          <Text style={styles.cardSub}>{t('watchVideoToKnowMore')}</Text>
         </TouchableOpacity>
 
         {/* Right Card */}
@@ -45,7 +47,7 @@ const CompetitionPolicies: React.FC<CompetitionPoliciesProps> = ({
             activeOpacity={0.7}
             onPress={onPressRefund}>
             <Text style={styles.shieldIcon}>🛡</Text>
-            <Text style={styles.policyTitle}>Refund policy</Text>
+            <Text style={styles.policyTitle}>{t('refundPolicy')}</Text>
           </TouchableOpacity>
 
           <View style={styles.divider} />
@@ -53,7 +55,7 @@ const CompetitionPolicies: React.FC<CompetitionPoliciesProps> = ({
           <View style={styles.policyRow}>
             <Text style={styles.shieldIcon}>🛡</Text>
             <View style={styles.razorpayInfo}>
-              <Text style={styles.secureText}>Secure payments powered by</Text>
+              <Text style={styles.secureText}>{t('securePaymentsPoweredBy')}</Text>
               <Text style={styles.razorpayBrand}>Razorpay</Text>
             </View>
           </View>

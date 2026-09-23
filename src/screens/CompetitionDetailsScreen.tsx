@@ -30,11 +30,13 @@ import VideoModal from '../components/competition/VideoModal';
 
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useCompetition} from '../context/CompetitionContext';
+import {useLanguage} from '../context/LanguageContext';
 import {pick, types} from '../utils/documentPicker';
 
 const CompetitionDetailsScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
+  const {t} = useLanguage();
 
   const competitionId = route.params?.competitionId || 'classical-dance-001';
 
@@ -97,7 +99,7 @@ const CompetitionDetailsScreen = () => {
   // Handle User Registration
   const handleRegister = async () => {
     if (!name.trim() || !email.trim()) {
-      setRegisterError('Name and email are required');
+      setRegisterError(t('nameAndEmailRequired'));
       return;
     }
 
@@ -199,8 +201,8 @@ const CompetitionDetailsScreen = () => {
           <View style={styles.loadingCircle}>
             <Text style={styles.loadingIcon}>F</Text>
           </View>
-          <Text style={styles.loadingTitle}>Loading competition</Text>
-          <Text style={styles.loadingText}>Please wait...</Text>
+          <Text style={styles.loadingTitle}>{t('loadingCompetition')}</Text>
+          <Text style={styles.loadingText}>{t('pleaseWait')}</Text>
         </View>
       </View>
     );
@@ -216,15 +218,15 @@ const CompetitionDetailsScreen = () => {
         />
         <View style={styles.errorContainer}>
           <Text style={styles.errorIcon}>!</Text>
-          <Text style={styles.errorTitle}>Unable to load competition</Text>
+          <Text style={styles.errorTitle}>{t('unableToLoad')}</Text>
           <Text style={styles.errorDescription}>
-            {error || 'Please check your connection and try again.'}
+            {error || t('checkConnection')}
           </Text>
           <TouchableOpacity
             style={styles.retryButton}
             activeOpacity={0.85}
             onPress={retry}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
+            <Text style={styles.retryButtonText}>{t('tryAgain')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -336,9 +338,9 @@ const CompetitionDetailsScreen = () => {
           <View style={styles.registeredBanner}>
             <Text style={styles.registeredCheck}>✓</Text>
             <View style={styles.registeredContent}>
-              <Text style={styles.registeredTitle}>You are registered</Text>
+              <Text style={styles.registeredTitle}>{t('youAreRegistered')}</Text>
               <Text style={styles.registeredText}>
-                Your participation has been saved.
+                {t('participationSaved')}
               </Text>
             </View>
           </View>
@@ -349,9 +351,9 @@ const CompetitionDetailsScreen = () => {
           <View style={styles.submissionSuccess}>
             <Text style={styles.successIcon}>✓</Text>
             <View style={styles.registeredContent}>
-              <Text style={styles.successTitle}>Submission uploaded</Text>
+              <Text style={styles.successTitle}>{t('submissionUploadedTitle')}</Text>
               <Text style={styles.successText}>
-                Your video has been submitted successfully.
+                {t('videoSubmittedSuccess')}
               </Text>
             </View>
           </View>
@@ -382,7 +384,7 @@ const CompetitionDetailsScreen = () => {
           style={styles.modalOverlay}>
           <View style={styles.modalCard}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Register for Competition</Text>
+              <Text style={styles.modalTitle}>{t('modalTitle')}</Text>
               <TouchableOpacity
                 onPress={() => setShowRegisterModal(false)}
                 hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}>
@@ -391,13 +393,13 @@ const CompetitionDetailsScreen = () => {
             </View>
 
             <Text style={styles.modalSubtitle}>
-              Enter your details to continue.
+              {t('modalSubtitle')}
             </Text>
 
             <TextInput
               value={name}
               onChangeText={setName}
-              placeholder="Full name"
+              placeholder={t('fullNamePlaceholder')}
               placeholderTextColor="#9AA4A8"
               style={styles.input}
             />
@@ -405,7 +407,7 @@ const CompetitionDetailsScreen = () => {
             <TextInput
               value={email}
               onChangeText={setEmail}
-              placeholder="Email address"
+              placeholder={t('emailPlaceholder')}
               placeholderTextColor="#9AA4A8"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -423,8 +425,8 @@ const CompetitionDetailsScreen = () => {
               activeOpacity={0.85}>
               <Text style={styles.confirmButtonText}>
                 {registering
-                  ? 'Registering...'
-                  : `Register • ₹${competition?.entryFee || 99}`}
+                  ? t('registering')
+                  : t('registerBtn', {fee: competition?.entryFee || 99})}
               </Text>
             </TouchableOpacity>
           </View>

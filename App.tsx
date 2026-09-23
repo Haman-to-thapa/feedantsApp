@@ -4,6 +4,7 @@ import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import AppNavigator from './src/navigation/AppNavigator';
 import {CompetitionProvider} from './src/context/CompetitionContext';
+import {LanguageProvider} from './src/context/LanguageContext';
 
 const LightTheme = {
   ...DefaultTheme,
@@ -22,11 +23,13 @@ const LightTheme = {
 const App = () => {
   return (
     <SafeAreaProvider>
-      <CompetitionProvider>
-        <NavigationContainer theme={LightTheme}>
-          <AppNavigator />
-        </NavigationContainer>
-      </CompetitionProvider>
+      <LanguageProvider>
+        <CompetitionProvider>
+          <NavigationContainer theme={LightTheme}>
+            <AppNavigator />
+          </NavigationContainer>
+        </CompetitionProvider>
+      </LanguageProvider>
     </SafeAreaProvider>
   );
 };

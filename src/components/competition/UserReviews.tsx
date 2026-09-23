@@ -1,11 +1,14 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface HearFromUsersProps {
   onPress?: () => void;
 }
 
 const UserReviews: React.FC<HearFromUsersProps> = ({onPress}) => {
+  const {t} = useLanguage();
+
   return (
     <TouchableOpacity
       style={styles.card}
@@ -14,8 +17,8 @@ const UserReviews: React.FC<HearFromUsersProps> = ({onPress}) => {
       <Text style={styles.chatIcon}>💬</Text>
 
       <View style={styles.info}>
-        <Text style={styles.title}>Hear From Our Users</Text>
-        <Text style={styles.subText}>See what participants say about Feedants</Text>
+        <Text style={styles.title}>{t('hearFromUsers')}</Text>
+        <Text style={styles.subText}>{t('hearFromUsersSub')}</Text>
       </View>
 
       <Text style={styles.arrow}>›</Text>

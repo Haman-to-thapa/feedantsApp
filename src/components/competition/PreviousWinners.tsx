@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
 } from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface WinnerItem {
   name: string;
@@ -48,9 +49,18 @@ interface PreviousWinnersProps {
 const PreviousWinners: React.FC<PreviousWinnersProps> = ({
   onPressWinnerVideo,
 }) => {
+  const {t, localize} = useLanguage();
+
+  const getPositionText = (pos: string) => {
+    if (pos.includes('1st')) return t('firstWinner');
+    if (pos.includes('2nd')) return t('secondWinner');
+    if (pos.includes('3rd')) return t('thirdWinner');
+    return pos;
+  };
+
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Previous Winners</Text>
+      <Text style={styles.sectionTitle}>{t('previousWinners')}</Text>
 
       <ScrollView
         horizontal
@@ -71,9 +81,9 @@ const PreviousWinners: React.FC<PreviousWinnersProps> = ({
 
             <View style={styles.info}>
               <Text style={styles.name} numberOfLines={1}>
-                {w.name}
+                {localize(w.name)}
               </Text>
-              <Text style={styles.position}>{w.position}</Text>
+              <Text style={styles.position}>{getPositionText(w.position)}</Text>
             </View>
           </TouchableOpacity>
         ))}

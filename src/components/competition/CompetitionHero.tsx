@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CompetitionHeroProps {
   title?: string;
@@ -24,6 +25,8 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
   remainingSpots,
   isRegistered = false,
 }) => {
+  const {t, localize} = useLanguage();
+
   const totalSpots = maxParticipants > 0 ? maxParticipants : 1;
   const spotsLeft =
     remainingSpots !== undefined
@@ -38,12 +41,12 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
     <View style={styles.card}>
       {/* Title and Registered Badge */}
       <View style={styles.titleRow}>
-        <Text style={styles.title}>{title}</Text>
+        <Text style={styles.title}>{localize(title)}</Text>
 
         {isRegistered && (
           <View style={styles.registeredBadge}>
             <Text style={styles.checkIcon}>✔</Text>
-            <Text style={styles.registeredText}>Registered</Text>
+            <Text style={styles.registeredText}>{t('registered')}</Text>
           </View>
         )}
       </View>
@@ -52,19 +55,21 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
       <View style={styles.tagsRow}>
         {(category || tags[0]) ? (
           <View style={styles.tag}>
-            <Text style={styles.tagText}>{category || tags[0]}</Text>
+            <Text style={styles.tagText}>{localize(category || tags[0])}</Text>
           </View>
         ) : null}
 
         {tags.length > 1 && (
           <View style={styles.tag}>
-            <Text style={styles.tagText}>{tags[1]}</Text>
+            <Text style={styles.tagText}>{localize(tags[1])}</Text>
           </View>
         )}
 
         <View style={styles.certificateWrapper}>
           <Text style={styles.trophyIcon}>🏆</Text>
-          <Text style={styles.certificateText}>Winners get certificate</Text>
+          <Text style={styles.certificateText}>
+            {t('winnersGetCertificate')}
+          </Text>
         </View>
       </View>
 
@@ -72,7 +77,7 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
       <View style={styles.statsRow}>
         {/* Prize Pool */}
         <View style={styles.statCol}>
-          <Text style={styles.statLabel}>Prize Pool</Text>
+          <Text style={styles.statLabel}>{t('prizePool')}</Text>
           <Text style={styles.prizeValue}>
             ₹ {prizePool?.toLocaleString('en-IN')}
           </Text>
@@ -80,7 +85,7 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
 
         {/* Entry Fee */}
         <View style={styles.statCol}>
-          <Text style={styles.statLabel}>Entry Fee</Text>
+          <Text style={styles.statLabel}>{t('entryFee')}</Text>
           <Text style={styles.feeValue}>₹ {entryFee}</Text>
         </View>
 
@@ -89,7 +94,9 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
           <View style={styles.spotsHeader}>
             <Text style={styles.spotsUserIcon}>👥</Text>
             <Text style={styles.spotsTitle}>
-              {spotsLeft > 0 ? `Only ${spotsLeft} spots left` : 'No spots left'}
+              {spotsLeft > 0
+                ? t('onlySpotsLeft', {count: spotsLeft})
+                : t('noSpotsLeft')}
             </Text>
           </View>
 
@@ -98,7 +105,7 @@ const CompetitionHero: React.FC<CompetitionHeroProps> = ({
           </View>
 
           <Text style={styles.bookedText}>
-            {registeredCount} / {maxParticipants} Booked
+            {t('booked', {registered: registeredCount, total: maxParticipants})}
           </Text>
         </View>
       </View>

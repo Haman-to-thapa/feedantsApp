@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface CountdownTimerProps {
   targetDate?: string | Date | number;
@@ -13,6 +14,8 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
     28 * 60 * 1000 +
     32 * 1000,
 }) => {
+  const {t} = useLanguage();
+
   const [timeLeft, setTimeLeft] = useState<number>(() => {
     const d = targetDate ? new Date(targetDate).getTime() : 0;
     const deadline = !isNaN(d) && d > 0 ? d : Date.now() + initialDurationMs;
@@ -45,24 +48,29 @@ const CountdownTimer: React.FC<CountdownTimerProps> = ({
 
   const isClosed = timeLeft <= 0;
 
+  const dUnit = t('daysShort');
+  const hUnit = t('hoursShort');
+  const mUnit = t('minsShort');
+  const sUnit = t('secsShort');
+
   return (
     <View style={styles.banner}>
       <View style={styles.leftGroup}>
         <Text style={styles.hourglassIcon}>⌛</Text>
         <Text style={styles.label}>
-          {isClosed ? 'Registration ended' : 'Registration closes in'}
+          {isClosed ? t('registrationEnded') : t('registrationClosesIn')}
         </Text>
       </View>
 
       <Text style={[styles.timerValue, isClosed && styles.timerClosed]}>
         {isClosed
-          ? '00d : 00h : 00m : 00s'
-          : `${format(days)}d : ${format(hours)}h : ${format(minutes)}m : ${format(seconds)}s`}
+          ? `00${dUnit} : 00${hUnit} : 00${mUnit} : 00${sUnit}`
+          : `${format(days)}${dUnit} : ${format(hours)}${hUnit} : ${format(minutes)}${mUnit} : ${format(seconds)}${sUnit}`}
       </Text>
 
       <View style={styles.rightGroup}>
         <Text style={[styles.hurryText, isClosed && styles.closedText]}>
-          {isClosed ? 'Closed' : '⏱ Hurry up!'}
+          {isClosed ? t('closed') : t('hurryUp')}
         </Text>
       </View>
     </View>
@@ -85,10 +93,12 @@ const styles = StyleSheet.create({
   leftGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexShrink: 1,
+    marginRight: 6,
   },
   hourglassIcon: {
-    fontSize: 14,
-    marginRight: 6,
+    fontSize: 13,
+    marginRight: 5,
   },
   label: {
     fontSize: 11,
@@ -96,9 +106,11 @@ const styles = StyleSheet.create({
     color: '#16232C',
   },
   timerValue: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '800',
     color: '#007B8A',
+    marginHorizontal: 4,
+    letterSpacing: 0.3,
   },
   timerClosed: {
     color: '#839299',
@@ -106,6 +118,7 @@ const styles = StyleSheet.create({
   rightGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginLeft: 6,
   },
   hurryText: {
     fontSize: 11,

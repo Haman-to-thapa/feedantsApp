@@ -1,5 +1,6 @@
 import React from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 interface ImportantDatesProps {
   registrationEnd?: string | Date;
@@ -8,10 +9,10 @@ interface ImportantDatesProps {
   resultDate?: string | Date;
 }
 
-const formatDate = (dateValue?: string | Date) => {
-  if (!dateValue) return {date: 'TBA', time: ''};
+const formatDate = (dateValue?: string | Date, tbaLabel = 'TBA') => {
+  if (!dateValue) return {date: tbaLabel, time: ''};
   const d = new Date(dateValue);
-  if (isNaN(d.getTime())) return {date: 'TBA', time: ''};
+  if (isNaN(d.getTime())) return {date: tbaLabel, time: ''};
 
   const day = d.getDate();
   const month = d.toLocaleDateString('en-IN', {month: 'short'});
@@ -34,14 +35,17 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({
   submissionEnd,
   resultDate,
 }) => {
-  const regEnd = formatDate(registrationEnd);
-  const subStart = formatDate(submissionStart);
-  const subEnd = formatDate(submissionEnd);
-  const resDate = formatDate(resultDate);
+  const {t} = useLanguage();
+  const tbaText = t('tba');
+
+  const regEnd = formatDate(registrationEnd, tbaText);
+  const subStart = formatDate(submissionStart, tbaText);
+  const subEnd = formatDate(submissionEnd, tbaText);
+  const resDate = formatDate(resultDate, tbaText);
 
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>Important Dates</Text>
+      <Text style={styles.sectionTitle}>{t('importantDates')}</Text>
 
       <View style={styles.gridCard}>
         {/* Top Row */}
@@ -50,7 +54,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({
           <View style={styles.cell}>
             <Text style={styles.icon}>📅</Text>
             <View style={styles.cellContent}>
-              <Text style={styles.label}>Register Before</Text>
+              <Text style={styles.label}>{t('registerBefore')}</Text>
               <Text style={styles.date}>{regEnd.date}</Text>
               {regEnd.time ? <Text style={styles.time}>{regEnd.time}</Text> : null}
             </View>
@@ -62,7 +66,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({
           <View style={styles.cell}>
             <Text style={styles.icon}>✈</Text>
             <View style={styles.cellContent}>
-              <Text style={styles.label}>Submission Starts</Text>
+              <Text style={styles.label}>{t('submissionStarts')}</Text>
               <Text style={styles.date}>{subStart.date}</Text>
               {subStart.time ? <Text style={styles.time}>{subStart.time}</Text> : null}
             </View>
@@ -77,7 +81,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({
           <View style={styles.cell}>
             <Text style={styles.icon}>📤</Text>
             <View style={styles.cellContent}>
-              <Text style={styles.label}>Submission Ends</Text>
+              <Text style={styles.label}>{t('submissionEnds')}</Text>
               <Text style={styles.date}>{subEnd.date}</Text>
               {subEnd.time ? <Text style={styles.time}>{subEnd.time}</Text> : null}
             </View>
@@ -89,7 +93,7 @@ const ImportantDates: React.FC<ImportantDatesProps> = ({
           <View style={styles.cell}>
             <Text style={styles.icon}>🏆</Text>
             <View style={styles.cellContent}>
-              <Text style={styles.label}>Result Date</Text>
+              <Text style={styles.label}>{t('resultDate')}</Text>
               <Text style={styles.date}>{resDate.date}</Text>
               {resDate.time ? <Text style={styles.time}>{resDate.time}</Text> : null}
             </View>

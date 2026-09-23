@@ -1,5 +1,6 @@
 import React, {useState} from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {useLanguage} from '../../context/LanguageContext';
 
 type TabKey = 'about' | 'judging' | 'rules';
 
@@ -9,29 +10,27 @@ interface CompetitionInfoTabsProps {
   rules?: string[];
 }
 
-const defaultAbout =
-  'This is an online classical dance competition open for all age groups. Participate from anywhere and showcase your talent. Express your passion through traditional dance.';
-
-const defaultJudging = [
-  'Technique and precision',
-  'Expression and presentation',
-  'Creativity and choreography',
-  'Overall performance',
-];
-
-const defaultRules = [
-  'Participants must submit their own recorded performance.',
-  'Video duration should adhere to standard event guidelines.',
-  'Late entries will not be accepted for evaluation.',
-];
-
 const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
   about = '',
   judgingParameters = [],
   rules = [],
 }) => {
+  const {t} = useLanguage();
   const [activeTab, setActiveTab] = useState<TabKey>('about');
   const [isExpanded, setIsExpanded] = useState(false);
+
+  const fallbackAbout = t('defaultAbout');
+  const fallbackJudging = [
+    t('judgingItem1'),
+    t('judgingItem2'),
+    t('judgingItem3'),
+    t('judgingItem4'),
+  ];
+  const fallbackRules = [
+    t('rulesItem1'),
+    t('rulesItem2'),
+    t('rulesItem3'),
+  ];
 
   return (
     <View style={styles.section}>
@@ -45,7 +44,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
               styles.tabText,
               activeTab === 'about' && styles.activeTabText,
             ]}>
-            About Competition
+            {t('aboutCompetition')}
           </Text>
         </TouchableOpacity>
 
@@ -57,7 +56,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
               styles.tabText,
               activeTab === 'judging' && styles.activeTabText,
             ]}>
-            Judging Parameters
+            {t('judgingParameters')}
           </Text>
         </TouchableOpacity>
 
@@ -69,7 +68,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
               styles.tabText,
               activeTab === 'rules' && styles.activeTabText,
             ]}>
-            Rules & Eligibility
+            {t('rulesEligibility')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -78,12 +77,10 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
       <View style={styles.card}>
         {activeTab === 'about' && (
           <>
-            <Text style={styles.bodyText}>{about || defaultAbout}</Text>
+            <Text style={styles.bodyText}>{about || fallbackAbout}</Text>
             {isExpanded && (
               <Text style={[styles.bodyText, styles.expandedText]}>
-                Winners will receive attractive cash prizes and verified
-                certificates. Get feedback from experienced mentors and build
-                your artistic portfolio!
+                {t('aboutExpanded')}
               </Text>
             )}
           </>
@@ -93,7 +90,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
           <View>
             {(judgingParameters.length > 0
               ? judgingParameters
-              : defaultJudging
+              : fallbackJudging
             ).map(param => (
               <Text key={param} style={styles.bulletItem}>
                 • {param}
@@ -104,7 +101,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
 
         {activeTab === 'rules' && (
           <View>
-            {(rules.length > 0 ? rules : defaultRules).map((r, i) => (
+            {(rules.length > 0 ? rules : fallbackRules).map((r, i) => (
               <Text key={r + i} style={styles.bulletItem}>
                 {i + 1}. {r}
               </Text>
@@ -117,7 +114,7 @@ const CompetitionInfoTabs: React.FC<CompetitionInfoTabsProps> = ({
           onPress={() => setIsExpanded(!isExpanded)}
           activeOpacity={0.7}>
           <Text style={styles.viewMoreText}>
-            {isExpanded ? 'View less ∧' : 'View more ∨'}
+            {isExpanded ? t('viewLess') : t('viewMore')}
           </Text>
         </TouchableOpacity>
       </View>
