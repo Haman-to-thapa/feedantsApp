@@ -1,11 +1,12 @@
-// Candidate endpoints for Physical USB device (localhost/127.0.0.1 via adb reverse) and Android Emulator (10.0.2.2)
+// Production Render Cloud URL with local fallbacks
 const CANDIDATE_URLS = [
+  'https://feedantsapp.onrender.com/api',
   'http://localhost:5000/api',
   'http://127.0.0.1:5000/api',
   'http://10.0.2.2:5000/api',
 ];
 
-let activeBaseUrl = 'http://localhost:5000/api';
+let activeBaseUrl = 'https://feedantsapp.onrender.com/api';
 
 export const getActiveBaseUrl = () => activeBaseUrl;
 
