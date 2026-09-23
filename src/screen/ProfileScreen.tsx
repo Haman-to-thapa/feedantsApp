@@ -62,6 +62,29 @@ const ProfileScreen: React.FC = () => {
   const handleSwitchState = async (
     target: 'REGISTRATION_OPEN' | 'SUBMISSION_OPEN' | 'REGISTRATION_FULL',
   ) => {
+    // If already in target state, do NOT hit backend to avoid disturbing existing timer/data
+    if (competitionState === target) {
+      Alert.alert(
+        'Feedants',
+        target === 'REGISTRATION_OPEN'
+          ? (language === 'en'
+              ? 'Registration timer is already ON and counting down! It will not restart.'
+              : 'रजिस्ट्रेशन टाइमर पहले से चालू है और समय कम हो रहा है! यह रीस्टार्ट नहीं होगा।')
+          : (language === 'en'
+              ? `Competition is already in ${target} state.`
+              : `प्रतियोगिता पहले से इस स्थिति में है।`),
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              navigation.navigate('Competitions');
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     try {
       setSwitching(true);
       await switchCompetitionState(target);
@@ -107,27 +130,69 @@ const ProfileScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.guestContainer}>
-          <View style={styles.guestIconCircle}>
-            <Text style={styles.guestIcon}>👤</Text>
-          </View>
-          <Text style={styles.guestTitle}>
-            {language === 'en' ? 'No User Logged In' : 'कोई उपयोगकर्ता लॉग इन नहीं है'}
-          </Text>
-          <Text style={styles.guestSubtitle}>
-            {language === 'en'
-              ? 'Register in a competition to get started.'
-              : 'शुरू करने के लिए किसी प्रतियोगिता में रजिस्टर करें।'}
-          </Text>
-          <TouchableOpacity
-            style={styles.goCompBtn}
-            activeOpacity={0.85}
-            onPress={() => navigation.navigate('Competitions')}>
-            <Text style={styles.goCompBtnText}>
-              🏆 {language === 'en' ? 'Go to Competitions' : 'प्रतियोगिताओं पर जाएं'}
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.guestContainer}>
+            <View style={styles.guestIconCircle}>
+              <Text style={styles.guestIcon}>👤</Text>
+            </View>
+            <Text style={styles.guestTitle}>
+              {language === 'en' ? 'No User Logged In' : 'कोई उपयोगकर्ता लॉग इन नहीं है'}
             </Text>
-          </TouchableOpacity>
-        </View>
+            <Text style={styles.guestSubtitle}>
+              {language === 'en'
+                ? 'Register in a competition to get started.'
+                : 'शुरू करने के लिए किसी प्रतियोगिता में रजिस्टर करें।'}
+            </Text>
+            <TouchableOpacity
+              style={styles.goCompBtn}
+              activeOpacity={0.85}
+              onPress={() => navigation.navigate('Competitions')}>
+              <Text style={styles.goCompBtnText}>
+                🏆 {language === 'en' ? 'Go to Competitions' : 'प्रतियोगिताओं पर जाएं'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* State Simulator — visible even when logged out so registration can be reopened */}
+          <View style={[styles.card, styles.simulatorCard]}>
+            <Text style={styles.simulatorTitle}>
+              🧪 {t('stateSimulatorTitle')}
+            </Text>
+            <Text style={styles.simulatorDesc}>
+              {language === 'en'
+                ? 'Registration window closed? Reopen it here to test with a new user.'
+                : 'रजिस्ट्रेशन विंडो बंद है? नए यूज़र के लिए यहाँ से खोलें।'}
+            </Text>
+
+            {switching && (
+              <ActivityIndicator color="#6C5CE7" size="small" style={{marginBottom: 10}} />
+            )}
+
+            <TouchableOpacity
+              style={styles.simButton}
+              activeOpacity={0.8}
+              disabled={switching}
+              onPress={() => handleSwitchState('REGISTRATION_OPEN')}>
+              <Text style={styles.simButtonText}>{t('stateRegOpen')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.simButton}
+              activeOpacity={0.8}
+              disabled={switching}
+              onPress={() => handleSwitchState('SUBMISSION_OPEN')}>
+              <Text style={styles.simButtonText}>{t('stateSubOpen')}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.simButton}
+              activeOpacity={0.8}
+              disabled={switching}
+              onPress={() => handleSwitchState('REGISTRATION_FULL')}>
+              <Text style={styles.simButtonText}>{t('stateRegFull')}</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     );
   }

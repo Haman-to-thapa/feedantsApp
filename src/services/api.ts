@@ -71,6 +71,21 @@ export const getCompetition = async (competitionId: string) => {
   return response.json();
 };
 
+export const getAllCompetitions = async () => {
+  const response = await fetchWithTimeout(
+    '/competitions',
+    {method: 'GET'},
+    8000,
+  );
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || 'Failed to fetch competitions');
+  }
+
+  return response.json();
+};
+
 export const registerCompetition = async (
   competitionId: string,
   nameOrData: string | {name: string; email: string},

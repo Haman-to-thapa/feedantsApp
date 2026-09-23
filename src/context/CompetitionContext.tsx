@@ -112,7 +112,9 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
       if (result?.data) {
         setCompetition(result.data);
         setError('');
-        AsyncStorage.setItem(COMPETITION_CACHE_KEY, JSON.stringify(result.data)).catch(() => {});
+        // Strip lifecycle before caching — it's time-dependent and must always come fresh from backend
+        const {lifecycle: _lc, ...staticData} = result.data;
+        AsyncStorage.setItem(COMPETITION_CACHE_KEY, JSON.stringify(staticData)).catch(() => {});
       } else {
         if (!competitionRef.current) {
           setError('Unable to load competition');
@@ -159,21 +161,34 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
           setUserEmail(cleanEmail);
           setIsRegistered(true);
 
-          // Optimistically increment spot count in state and cache
+          // Optimistically increment registeredCount for instant UI feedback
           setCompetition((prev: any) => {
             if (!prev) return prev;
             const newCount = (prev.registeredCount || 0) + 1;
             const updated = {
               ...prev,
               registeredCount: newCount,
-              lifecycle: {
-                ...prev.lifecycle,
-                remainingSpots: Math.max((prev.maxParticipants || 20) - newCount, 0),
-              },
+              // Keep lifecycle intact but update remainingSpots optimistically
+              lifecycle: prev.lifecycle
+                ? {...prev.lifecycle, remainingSpots: Math.max((prev.maxParticipants || 20) - newCount, 0)}
+                : prev.lifecycle,
             };
-            AsyncStorage.setItem(COMPETITION_CACHE_KEY, JSON.stringify(updated)).catch(() => {});
+            // Cache without lifecycle so stale spots count never persists
+            const {lifecycle: _lc, ...staticData} = updated;
+            AsyncStorage.setItem(COMPETITION_CACHE_KEY, JSON.stringify({...staticData, registeredCount: newCount})).catch(() => {});
             return updated;
           });
+
+          // Confirm real count from backend in background (non-blocking)
+          getCompetition(targetId)
+            .then(res => {
+              if (res?.data) {
+                setCompetition(res.data);
+                const {lifecycle: _lc2, ...sd} = res.data;
+                AsyncStorage.setItem(COMPETITION_CACHE_KEY, JSON.stringify(sd)).catch(() => {});
+              }
+            })
+            .catch(() => {});
 
           return {success: true};
         }

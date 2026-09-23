@@ -41,6 +41,11 @@ const participationSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+
+    timeRemainingAtRegistration: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

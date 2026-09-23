@@ -3,6 +3,7 @@ import upload from '../middleware/upload.js';
 import validateObjectId from '../middleware/validateObjectId.js';
 import validateRegistration from '../middleware/validateRegistration.js';
 import {
+  getAllCompetitions,
   getCompetitionById,
   registerForCompetition,
   getParticipation,
@@ -11,6 +12,9 @@ import {
 } from '../controllers/competitionController.js';
 
 const router = express.Router();
+
+// List all competitions
+router.get('/', getAllCompetitions);
 
 router.get('/:competitionId', validateObjectId, getCompetitionById);
 

@@ -9,14 +9,17 @@ import rateLimit from 'express-rate-limit';
 import connectDB from './config/db.js';
 import competitionRoutes from './routes/competitionRoutes.js';
 import errorHandler from './middleware/errorHandler.js';
+import autoCreateNextCompetitionIfNeeded from './services/autoNextCompetition.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 
-// Connect Database
-connectDB();
+// Connect Database, then auto-create next competition if all ended
+connectDB().then(async () => {
+  await autoCreateNextCompetitionIfNeeded();
+}).catch(() => {});
 
 // Security and parsing middleware
 app.use(helmet());
@@ -38,6 +41,27 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/competitions', competitionRoutes);
+
+// Manual trigger: POST /api/admin/next-competition
+// Jab chahiye tab manually naya competition force-create karo
+app.post('/api/admin/next-competition', async (req, res) => {
+  try {
+    const result = await autoCreateNextCompetitionIfNeeded();
+    if (result) {
+      return res.json({
+        success: true,
+        message: `New competition created: ${result.competitionId}`,
+        data: result,
+      });
+    }
+    return res.json({
+      success: false,
+      message: 'Active competition already exists or no source found',
+    });
+  } catch (err) {
+    return res.status(500).json({success: false, message: err.message});
+  }
+});
 
 // Health check
 app.get('/', (req, res) => {

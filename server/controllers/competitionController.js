@@ -3,7 +3,31 @@ import Competition from '../models/Competition.js';
 import User from '../models/User.js';
 import Participation from '../models/Participation.js';
 import {getCompetitionState} from '../services/competitionState.js';
+import {autoCreateNextCompetitionIfNeeded} from '../services/autoNextCompetition.js';
 
+// ─── GET /api/competitions — list all competitions (newest first) ──────────
+export const getAllCompetitions = async (req, res) => {
+  try {
+    // Automatically create next competition if current competition has ended
+    await autoCreateNextCompetitionIfNeeded();
+
+    const competitions = await Competition.find()
+      .sort({registrationStart: -1})
+      .lean();
+
+    const data = competitions.map(c => ({
+      ...c,
+      lifecycle: getCompetitionState(c),
+    }));
+
+    return res.status(200).json({success: true, data});
+  } catch (error) {
+    console.error('Get all competitions error:', error);
+    return res.status(500).json({success: false, message: 'Server error'});
+  }
+};
+
+// ─── GET /api/competitions/:competitionId ─────────────────────────────────
 export const getCompetitionById = async (req, res) => {
   try {
     const {competitionId} = req.params;
@@ -224,7 +248,15 @@ export const registerForCompetition = async (req, res) => {
       });
     }
 
-    // 7. Create participation
+    // 7. Calculate time remaining on competition timer at registration moment
+    const regMoment = new Date();
+    const regDeadline = new Date(competition.registrationEnd);
+    const msLeft = Math.max(0, regDeadline.getTime() - regMoment.getTime());
+    const hLeft = Math.floor(msLeft / 3600000);
+    const mLeft = Math.floor((msLeft % 3600000) / 60000);
+    const sLeft = Math.floor((msLeft % 60000) / 1000);
+    const timeRemainingStr = `${hLeft}h ${mLeft}m ${sLeft}s remaining`;
+
     let participation = null;
     if (session) {
       const createdParticipations = await Participation.create(
@@ -235,6 +267,8 @@ export const registerForCompetition = async (req, res) => {
             paymentStatus: 'pending',
             registrationStatus: 'registered',
             submissionStatus: 'not_uploaded',
+            registeredAt: regMoment,
+            timeRemainingAtRegistration: timeRemainingStr,
           },
         ],
         {session},
@@ -248,6 +282,8 @@ export const registerForCompetition = async (req, res) => {
         paymentStatus: 'pending',
         registrationStatus: 'registered',
         submissionStatus: 'not_uploaded',
+        registeredAt: regMoment,
+        timeRemainingAtRegistration: timeRemainingStr,
       });
     }
 
@@ -417,26 +453,75 @@ export const updateCompetitionStateForTesting = async (req, res) => {
       return res.status(404).json({success: false, message: 'Competition not found'});
     }
 
-    const now = Date.now();
+    const now = new Date();
+
+    // Ensure originalRegistrationEnd is stored so the true scheduled deadline is never lost
+    if (!competition.originalRegistrationEnd && competition.registrationEnd) {
+      competition.originalRegistrationEnd = competition.registrationEnd;
+    }
 
     if (targetState === 'SUBMISSION_OPEN') {
-      competition.registrationStart = new Date(now - 48 * 3600 * 1000);
-      competition.registrationEnd = new Date(now - 1 * 3600 * 1000);
-      competition.submissionStart = new Date(now - 30 * 60 * 1000);
-      competition.submissionEnd = new Date(now + 48 * 3600 * 1000);
-      competition.registeredCount = Math.max(competition.registeredCount, 1);
+      // Save original registration end before temporarily faking submission mode
+      if (!competition.originalRegistrationEnd && competition.registrationEnd) {
+        competition.originalRegistrationEnd = competition.registrationEnd;
+      }
+      competition.registrationStart = new Date(now.getTime() - 48 * 3600 * 1000);
+      competition.registrationEnd = new Date(now.getTime() - 1 * 3600 * 1000);
+
+      // Only shift submission to open if it hasn't started yet
+      if (new Date(competition.submissionStart) > now) {
+        competition.submissionStart = new Date(now.getTime() - 30 * 60 * 1000);
+      }
+      // Extend submission end if it's already past
+      if (new Date(competition.submissionEnd) <= now) {
+        competition.submissionEnd = new Date(now.getTime() + 48 * 3600 * 1000);
+      }
+      // Ensure at least 1 registered so submission is meaningful
+      if (competition.registeredCount < 1) {
+        competition.registeredCount = 1;
+      }
+
     } else if (targetState === 'REGISTRATION_FULL') {
       competition.maxParticipants = 20;
       competition.registeredCount = 20;
-      competition.registrationStart = new Date(now - 24 * 3600 * 1000);
-      competition.registrationEnd = new Date(now + 24 * 3600 * 1000);
+      // If we have an original future deadline, restore it
+      if (competition.originalRegistrationEnd && new Date(competition.originalRegistrationEnd) > now) {
+        competition.registrationEnd = competition.originalRegistrationEnd;
+      }
+
     } else if (targetState === 'REGISTRATION_OPEN') {
-      competition.maxParticipants = 20;
-      competition.registeredCount = 2;
-      competition.registrationStart = new Date(now - 24 * 3600 * 1000);
-      competition.registrationEnd = new Date(now + 24 * 3600 * 1000);
-      competition.submissionStart = new Date(now + 48 * 3600 * 1000);
-      competition.submissionEnd = new Date(now + 96 * 3600 * 1000);
+      // ──────────────────────────────────────────────────────────────────────
+      // CRITICAL FIX: NEVER RESTART OR PUSH FORWARD THE TIMER!
+      // 1. If originalRegistrationEnd exists and is in the future, restore it!
+      // 2. If current registrationEnd is in the future, DO NOT TOUCH IT AT ALL!
+      // 3. Only if registration has genuinely expired (past date), extend it.
+      // ──────────────────────────────────────────────────────────────────────
+      const origInFuture =
+        competition.originalRegistrationEnd &&
+        new Date(competition.originalRegistrationEnd) > now;
+      const currentInFuture =
+        competition.registrationEnd &&
+        new Date(competition.registrationEnd) > now;
+
+      if (origInFuture) {
+        // Restore the original deadline so timer continues exactly without restart
+        competition.registrationEnd = competition.originalRegistrationEnd;
+        competition.registrationStart = new Date(now.getTime() - 24 * 3600 * 1000);
+      } else if (currentInFuture) {
+        // Current registration is already in the future — lock it in as original!
+        competition.originalRegistrationEnd = competition.registrationEnd;
+      } else {
+        // Only if it was genuinely expired in the past, set a new deadline and lock it
+        const newEnd = new Date(now.getTime() + 24 * 3600 * 1000);
+        competition.registrationStart = new Date(now.getTime() - 24 * 3600 * 1000);
+        competition.registrationEnd = newEnd;
+        competition.originalRegistrationEnd = newEnd;
+        competition.submissionStart = new Date(now.getTime() + 48 * 3600 * 1000);
+        competition.submissionEnd = new Date(now.getTime() + 96 * 3600 * 1000);
+      }
+
+      // DO NOT reset registeredCount — actual registrations must be preserved
+      competition.maxParticipants = Math.max(competition.maxParticipants || 20, 20);
     }
 
     await competition.save();

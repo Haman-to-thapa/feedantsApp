@@ -54,6 +54,10 @@ const competitionSchema = new mongoose.Schema(
       required: true,
     },
 
+    originalRegistrationEnd: {
+      type: Date,
+    },
+
     submissionStart: {
       type: Date,
       required: true,
