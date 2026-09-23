@@ -374,6 +374,28 @@ const CompetitionDetailsScreen = () => {
           </View>
         )}
 
+        {/* Competition Ended Banner — shown when submission window closes */}
+        {(competitionState === 'SUBMISSION_CLOSED' ||
+          competitionState === 'RESULT_PUBLISHED') && (
+          <View style={styles.endedBanner}>
+            <Text style={styles.endedIcon}>
+              {competitionState === 'RESULT_PUBLISHED' ? '🏆' : '🔒'}
+            </Text>
+            <View style={styles.registeredContent}>
+              <Text style={styles.endedTitle}>
+                {competitionState === 'RESULT_PUBLISHED'
+                  ? 'Results Published!'
+                  : 'Competition Ended'}
+              </Text>
+              <Text style={styles.endedText}>
+                {competitionState === 'RESULT_PUBLISHED'
+                  ? 'Thank you for participating. Check the results section.'
+                  : 'The submission window is now closed. Results will be announced soon.'}
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Dynamic Action Button matching lifecycle state */}
         <UploadSubmissionButton
           isRegistered={isRegistered}
@@ -712,5 +734,33 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '800',
     color: '#FFFFFF',
+  },
+  // Competition ended / result published banner
+  endedBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF3CD',
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#F5C842',
+    padding: 14,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  endedIcon: {
+    fontSize: 28,
+    marginRight: 14,
+  },
+  endedTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#7B4F00',
+    marginBottom: 2,
+  },
+  endedText: {
+    fontSize: 12,
+    color: '#7B4F00',
+    lineHeight: 18,
+    opacity: 0.85,
   },
 });
