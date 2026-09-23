@@ -75,9 +75,7 @@ const UploadSubmissionButton: React.FC<UploadSubmissionButtonProps> = ({
     }
 
     if (isRegistered) {
-      return (
-        submissionUploaded || competitionState !== 'SUBMISSION_OPEN'
-      );
+      return submissionUploaded;
     }
 
     return competitionState !== 'REGISTRATION_OPEN';

@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
+  Alert,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 
@@ -27,11 +29,11 @@ import UserReviews from '../components/competition/UserReviews';
 import AdvertisementCard from '../components/competition/AdvertisementCard';
 import UploadSubmissionButton from '../components/competition/UploadSubmissionButton';
 import VideoModal from '../components/competition/VideoModal';
+import VideoUploadModal from '../components/competition/VideoUploadModal';
 
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useCompetition} from '../context/CompetitionContext';
 import {useLanguage} from '../context/LanguageContext';
-import {pick, types} from '../utils/documentPicker';
 
 const CompetitionDetailsScreen = () => {
   const navigation = useNavigation<any>();
@@ -52,11 +54,21 @@ const CompetitionDetailsScreen = () => {
     loadCompetition,
     register,
     uploadVideo,
+    switchCompetitionState,
     retry,
   } = useCompetition();
 
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadCompetition(competitionId);
+    setRefreshing(false);
+  }, [loadCompetition, competitionId]);
+
   // Local Modal Form States
   const [showRegisterModal, setShowRegisterModal] = useState<boolean>(false);
+  const [showUploadModal, setShowUploadModal] = useState<boolean>(false);
   const [name, setName] = useState<string>('');
   const [email, setEmail] = useState<string>('');
   const [registering, setRegistering] = useState<boolean>(false);
@@ -111,6 +123,15 @@ const CompetitionDetailsScreen = () => {
 
       if (result.success) {
         setShowRegisterModal(false);
+        // Automatically sync state with backend (no manual refresh needed)
+        await loadCompetition(competitionId);
+
+        // If submission window is open, seamlessly trigger upload flow
+        if (competitionState === 'SUBMISSION_OPEN') {
+          setTimeout(() => {
+            setShowUploadModal(true);
+          }, 350);
+        }
       } else {
         setRegisterError(result.message || 'Registration failed');
       }
@@ -121,45 +142,6 @@ const CompetitionDetailsScreen = () => {
     }
   };
 
-  // Video Submission Upload Handler
-  const handleUploadSubmission = useCallback(async () => {
-    try {
-      setUploadingSubmission(true);
-      setUploadError('');
-
-      const res = await pick({
-        mode: 'import',
-        type: [types.video],
-        allowMultiSelection: false,
-      });
-
-      const file = Array.isArray(res) ? res[0] : res;
-
-      if (!file) {
-        return;
-      }
-
-      const result = await uploadVideo({
-        uri: file.uri || (file as any).fileCopyUri,
-        name: file.name || 'competition-submission.mp4',
-        type: file.type || 'video/mp4',
-      });
-
-      if (!result.success) {
-        setUploadError(result.message || 'Upload failed');
-      }
-    } catch (err: any) {
-      if (
-        err?.message?.includes('cancelled') ||
-        err?.code === 'DOCUMENT_PICKER_CANCELED'
-      ) {
-        return;
-      }
-      setUploadError(err?.message || 'Unable to upload submission');
-    } finally {
-      setUploadingSubmission(false);
-    }
-  }, [uploadVideo]);
 
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -171,17 +153,43 @@ const CompetitionDetailsScreen = () => {
 
   const handleButtonPress = useCallback(() => {
     if (!isRegistered) {
-      if (competitionState === 'REGISTRATION_OPEN') {
+      if (
+        competitionState === 'REGISTRATION_OPEN' ||
+        competitionState === 'SUBMISSION_OPEN'
+      ) {
         setRegisterError('');
         setShowRegisterModal(true);
       }
       return;
     }
 
-    if (competitionState === 'SUBMISSION_OPEN' && !submissionUploaded) {
-      handleUploadSubmission();
+    if (!submissionUploaded) {
+      if (competitionState === 'SUBMISSION_OPEN') {
+        setShowUploadModal(true);
+      } else {
+        Alert.alert(
+          t('openSubmissionNowTitle'),
+          t('openSubmissionNowMsg'),
+          [
+            {text: t('cancel'), style: 'cancel'},
+            {
+              text: t('testUploadBtn'),
+              onPress: async () => {
+                await switchCompetitionState('SUBMISSION_OPEN');
+                setShowUploadModal(true);
+              },
+            },
+          ],
+        );
+      }
     }
-  }, [isRegistered, submissionUploaded, competitionState, handleUploadSubmission]);
+  }, [
+    isRegistered,
+    submissionUploaded,
+    competitionState,
+    switchCompetitionState,
+    t,
+  ]);
 
   const insets = useSafeAreaInsets();
   const dynamicTopInset =
@@ -245,7 +253,14 @@ const CompetitionDetailsScreen = () => {
         contentContainerStyle={styles.contentContainer}
         removeClippedSubviews={true}
         scrollEventThrottle={16}
-        overScrollMode="never">
+        overScrollMode="never"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007B8A']}
+          />
+        }>
         {/* ← Go back | ENG हिंदी */}
         <CompetitionHeader onBack={handleBack} />
 
@@ -441,6 +456,29 @@ const CompetitionDetailsScreen = () => {
         videoUrl={activeVideo.videoUrl}
         thumbnailUrl={activeVideo.thumbnailUrl}
         onClose={() => setVideoModalVisible(false)}
+      />
+
+      {/* Interactive Video Submission Upload Modal */}
+      <VideoUploadModal
+        visible={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        onUpload={async file => {
+          setUploadingSubmission(true);
+          try {
+            const res = await uploadVideo(file);
+            if (res.success) {
+              await loadCompetition(competitionId);
+              return true;
+            }
+            setUploadError(res.message || 'Upload failed');
+            return false;
+          } catch (err: any) {
+            setUploadError(err?.message || 'Upload failed');
+            return false;
+          } finally {
+            setUploadingSubmission(false);
+          }
+        }}
       />
     </View>
   );

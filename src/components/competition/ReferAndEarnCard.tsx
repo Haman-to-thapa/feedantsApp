@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import {View, Text, StyleSheet, TouchableOpacity, Share} from 'react-native';
 import {useLanguage} from '../../context/LanguageContext';
 
 const ReferAndEarnCard: React.FC = () => {
@@ -10,6 +10,19 @@ const ReferAndEarnCard: React.FC = () => {
   const handleCopy = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleShare = async () => {
+    try {
+      const message = t('shareMessage', {link: referralLink});
+      await Share.share({
+        message,
+        url: referralLink,
+        title: t('shareTitle'),
+      });
+    } catch {
+      // User dismissed share dialog
+    }
   };
 
   return (
@@ -35,8 +48,11 @@ const ReferAndEarnCard: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Refer Now Button */}
-        <TouchableOpacity style={styles.referNowBtn} activeOpacity={0.8}>
+        {/* Refer Now Button with Native Share Sheet */}
+        <TouchableOpacity
+          style={styles.referNowBtn}
+          activeOpacity={0.8}
+          onPress={handleShare}>
           <Text style={styles.referNowText}>{t('referNow')}</Text>
         </TouchableOpacity>
       </View>

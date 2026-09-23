@@ -12,6 +12,7 @@ import {
   getParticipation,
   registerCompetition,
   uploadSubmission,
+  setCompetitionState,
 } from '../services/api';
 
 export interface CompetitionContextType {
@@ -23,9 +24,19 @@ export interface CompetitionContextType {
   userEmail: string;
   loading: boolean;
   error: string;
-  loadCompetition: (id?: string) => Promise<void>;
+  loadCompetition: (id?: string, skipEmailRestore?: boolean) => Promise<void>;
   register: (name: string, email: string) => Promise<{success: boolean; message?: string}>;
-  uploadVideo: (file: {uri: string; name: string; type: string}) => Promise<{success: boolean; message?: string}>;
+  uploadVideo: (file: {
+    uri: string;
+    name: string;
+    type: string;
+    size?: number;
+  }) => Promise<{success: boolean; message?: string}>;
+  logout: () => Promise<void>;
+  resetSubmissionStatus: () => void;
+  switchCompetitionState: (
+    state: 'REGISTRATION_OPEN' | 'SUBMISSION_OPEN' | 'REGISTRATION_FULL',
+  ) => Promise<void>;
   retry: () => void;
 }
 
@@ -86,7 +97,7 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
   }, [competition]);
 
   // Main data loader with network fallback and background refresh
-  const loadCompetition = useCallback(async (id?: string) => {
+  const loadCompetition = useCallback(async (id?: string, skipEmailRestore = false) => {
     const targetId = id || activeCompetitionId || 'classical-dance-001';
     setActiveCompetitionId(targetId);
 
@@ -108,20 +119,22 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
         }
       }
 
-      // Check participation in background
-      const savedEmail = (await AsyncStorage.getItem(USER_EMAIL_KEY)) || userEmail;
-      if (savedEmail) {
-        setUserEmail(savedEmail);
-        try {
-          const partResult = await getParticipation(targetId, savedEmail);
-          if (partResult) {
-            setIsRegistered(partResult.registered === true);
-            setSubmissionUploaded(
-              partResult.participation?.submissionStatus === 'uploaded',
-            );
+      // Check participation — skip if called from logout to avoid restoring old email
+      if (!skipEmailRestore) {
+        const savedEmail = (await AsyncStorage.getItem(USER_EMAIL_KEY)) || userEmail;
+        if (savedEmail) {
+          setUserEmail(savedEmail);
+          try {
+            const partResult = await getParticipation(targetId, savedEmail);
+            if (partResult) {
+              setIsRegistered(partResult.registered === true);
+              setSubmissionUploaded(
+                partResult.participation?.submissionStatus === 'uploaded',
+              );
+            }
+          } catch {
+            // Non-blocking background participation check
           }
-        } catch {
-          // Non-blocking background participation check
         }
       }
     } catch (err: any) {
@@ -174,7 +187,12 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
 
   // Upload Video submission
   const uploadVideo = useCallback(
-    async (file: {uri: string; name: string; type: string}) => {
+    async (file: {
+      uri: string;
+      name: string;
+      type: string;
+      size?: number;
+    }) => {
       const targetId = activeCompetitionId || 'classical-dance-001';
       const email = userEmail || (await AsyncStorage.getItem(USER_EMAIL_KEY));
 
@@ -196,6 +214,48 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
     [activeCompetitionId, userEmail],
   );
 
+  const logout = useCallback(async () => {
+    try {
+      await AsyncStorage.removeItem(USER_EMAIL_KEY);
+    } catch {
+      // Ignore
+    }
+    // Clear all user state immediately
+    setUserEmail('');
+    setIsRegistered(false);
+    setSubmissionUploaded(false);
+    // Reload competition data but skip email restore so old email never comes back
+    await loadCompetition(activeCompetitionId, true);
+  }, [loadCompetition, activeCompetitionId]);
+
+  const resetSubmissionStatus = useCallback(() => {
+    setSubmissionUploaded(false);
+  }, []);
+
+  const switchCompetitionState = useCallback(
+    async (
+      targetState: 'REGISTRATION_OPEN' | 'SUBMISSION_OPEN' | 'REGISTRATION_FULL',
+    ) => {
+      const targetId = activeCompetitionId || 'classical-dance-001';
+      try {
+        setLoading(true);
+        const result = await setCompetitionState(targetId, targetState);
+        if (result?.data) {
+          setCompetition(result.data);
+          AsyncStorage.setItem(
+            COMPETITION_CACHE_KEY,
+            JSON.stringify(result.data),
+          ).catch(() => {});
+        }
+      } catch (err: any) {
+        console.error('switchCompetitionState error:', err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeCompetitionId],
+  );
+
   const retry = useCallback(() => {
     loadCompetition(activeCompetitionId);
   }, [loadCompetition, activeCompetitionId]);
@@ -213,6 +273,9 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
       loadCompetition,
       register,
       uploadVideo,
+      logout,
+      resetSubmissionStatus,
+      switchCompetitionState,
       retry,
     }),
     [
@@ -227,6 +290,9 @@ export const CompetitionProvider: React.FC<{children: React.ReactNode}> = ({chil
       loadCompetition,
       register,
       uploadVideo,
+      logout,
+      resetSubmissionStatus,
+      switchCompetitionState,
       retry,
     ],
   );

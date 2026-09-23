@@ -7,6 +7,7 @@ import {
   registerForCompetition,
   getParticipation,
   uploadSubmission,
+  updateCompetitionStateForTesting,
 } from '../controllers/competitionController.js';
 
 const router = express.Router();
@@ -31,6 +32,12 @@ router.post(
   validateObjectId,
   upload.single('submission'),
   uploadSubmission,
+);
+
+router.post(
+  '/:competitionId/state',
+  validateObjectId,
+  updateCompetitionStateForTesting,
 );
 
 export default router;

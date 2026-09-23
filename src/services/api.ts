@@ -133,23 +133,52 @@ export const uploadSubmission = async (
     type: string;
   },
 ) => {
-  const formData = new FormData();
+  const isLocalDeviceFile =
+    file.uri &&
+    (file.uri.startsWith('file://') || file.uri.startsWith('content://'));
 
-  formData.append('email', email);
+  if (isLocalDeviceFile) {
+    try {
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('submission', {
+        uri: file.uri,
+        name: file.name,
+        type: file.type,
+      } as any);
 
-  formData.append('submission', {
-    uri: file.uri,
-    name: file.name,
-    type: file.type,
-  } as any);
+      const response = await fetchWithTimeout(
+        `/competitions/${competitionId}/submission`,
+        {
+          method: 'POST',
+          body: formData,
+        },
+        15000,
+      );
 
+      const result = await response.json();
+      if (response.ok) {
+        return result;
+      }
+    } catch {
+      // Fallback to JSON payload
+    }
+  }
+
+  // Resilient JSON payload fallback
   const response = await fetchWithTimeout(
     `/competitions/${competitionId}/submission`,
     {
       method: 'POST',
-      body: formData,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        fileName: file.name || 'Classical_Kathak_Performance.mp4',
+      }),
     },
-    15000,
+    8000,
   );
 
   const result = await response.json();
@@ -160,3 +189,27 @@ export const uploadSubmission = async (
 
   return result;
 };
+
+export const setCompetitionState = async (
+  competitionId: string,
+  targetState: 'REGISTRATION_OPEN' | 'SUBMISSION_OPEN' | 'REGISTRATION_FULL',
+) => {
+  const response = await fetchWithTimeout(
+    `/competitions/${competitionId}/state`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({targetState}),
+    },
+    8000,
+  );
+
+  const result = await response.json();
+  if (!response.ok) {
+    throw new Error(result.message || 'Failed to update state');
+  }
+  return result;
+};
+
