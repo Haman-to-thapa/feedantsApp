@@ -9,9 +9,12 @@ import {
   RefreshControl,
   StatusBar,
 } from 'react-native';
+import AsyncStorage from '../utils/storage';
 import {useNavigation} from '@react-navigation/native';
 import {getAllCompetitions} from '../services/api';
 import {useLanguage} from '../context/LanguageContext';
+
+const COMPETITIONS_CACHE_KEY = 'feedants_competitions_list_cache';
 
 // State badge config
 const STATE_CONFIG: Record<
@@ -35,15 +38,37 @@ const CompetitionsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
+  // 1. Immediately hydrate from cache on mount (0ms instant UI!)
+  useEffect(() => {
+    AsyncStorage.getItem(COMPETITIONS_CACHE_KEY)
+      .then((cached: string | null) => {
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setCompetitions(parsed);
+            setLoading(false); // Instant render from cache!
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const fetchCompetitions = useCallback(async () => {
     try {
       setError('');
       const res = await getAllCompetitions();
-      if (res?.data) {
+      if (res?.data && Array.isArray(res.data)) {
         setCompetitions(res.data);
+        AsyncStorage.setItem(COMPETITIONS_CACHE_KEY, JSON.stringify(res.data)).catch(() => {});
       }
     } catch (err: any) {
-      setError(err?.message || 'Failed to load competitions');
+      setCompetitions(prev => {
+        // Only show full error if we have no cached data to display
+        if (prev.length === 0) {
+          setError(err?.message || 'Failed to load competitions');
+        }
+        return prev;
+      });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -180,12 +205,14 @@ const CompetitionsScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {loading && !refreshing ? (
+      {loading && !refreshing && competitions.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#167C80" />
-          <Text style={styles.loadingText}>Loading competitions...</Text>
+          <Text style={styles.loadingText}>
+            {language === 'hi' ? 'प्रतियोगिताएं लोड हो रही हैं...' : 'Loading competitions...'}
+          </Text>
         </View>
-      ) : error ? (
+      ) : error && competitions.length === 0 ? (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>⚠️</Text>
           <Text style={styles.emptyTitle}>Unable to Load</Text>

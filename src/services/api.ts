@@ -1,52 +1,63 @@
 // Production Render Cloud URL with local fallbacks
+const RENDER_PRIMARY_URL = 'https://feedantsapp.onrender.com/api';
+
 const CANDIDATE_URLS = [
-  'https://feedantsapp.onrender.com/api',
+  RENDER_PRIMARY_URL,
   'http://localhost:5000/api',
   'http://127.0.0.1:5000/api',
   'http://10.0.2.2:5000/api',
 ];
 
-let activeBaseUrl = 'https://feedantsapp.onrender.com/api';
+let activeBaseUrl = RENDER_PRIMARY_URL;
 
 export const getActiveBaseUrl = () => activeBaseUrl;
 
 const fetchWithTimeout = async (
   path: string,
   options: RequestInit = {},
-  timeoutMs = 7000,
+  timeoutMs = 25000, // 25s gives Render free tier enough time to wake up cleanly
 ): Promise<Response> => {
-  // First attempt with active base URL
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  const execute = async (baseUrl: string, ms: number) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    try {
+      const res = await fetch(`${baseUrl}${path}`, {
+        ...options,
+        signal: controller.signal,
+      });
+      clearTimeout(timer);
+      return res;
+    } catch (err) {
+      clearTimeout(timer);
+      throw err;
+    }
+  };
 
   try {
-    const res = await fetch(`${activeBaseUrl}${path}`, {
-      ...options,
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    return res;
+    // 1st attempt with active base URL
+    return await execute(activeBaseUrl, timeoutMs);
   } catch (primaryErr: any) {
-    clearTimeout(timer);
+    // If Render cloud was waking up from spin-down, auto-retry once after 1.5s
+    if (activeBaseUrl === RENDER_PRIMARY_URL) {
+      try {
+        await new Promise(resolve => setTimeout(() => resolve(undefined), 1500));
+        return await execute(RENDER_PRIMARY_URL, 18000);
+      } catch {
+        // Fall through to other candidates if any
+      }
+    }
 
-    // If primary failed, try each candidate
+    // Try other candidate URLs if primary failed
     for (const candidate of CANDIDATE_URLS) {
-      if (candidate !== activeBaseUrl) {
-        const altController = new AbortController();
-        const altTimer = setTimeout(() => altController.abort(), timeoutMs);
-
+      if (candidate !== activeBaseUrl && candidate !== RENDER_PRIMARY_URL) {
         try {
-          const altRes = await fetch(`${candidate}${path}`, {
-            ...options,
-            signal: altController.signal,
-          });
-          clearTimeout(altTimer);
+          const altRes = await execute(candidate, 3000);
           if (altRes) {
             activeBaseUrl = candidate;
             return altRes;
           }
         } catch {
-          clearTimeout(altTimer);
+          // ignore local fallback errors
         }
       }
     }
